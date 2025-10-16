@@ -28,7 +28,7 @@ from src.langgraph_learning.utils import (
 )
 
 
-def build_agent_graph(model: str = "gpt-5-nano"):
+def build_agent_graph(model: str | None = None):
     """Compile a reactive graph that routes between an assistant node and tools."""
     tools = [add, multiply, divide]
     llm = create_llm(model=model)

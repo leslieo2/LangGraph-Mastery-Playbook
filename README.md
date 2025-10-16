@@ -76,23 +76,15 @@ export LANGSMITH_API_KEY="ls-..."     # Optional, enables tracing in supported l
 
 ### LLM Provider Configuration
 
-All lessons create chat models through `src.langgraph_learning.utils.create_llm`, which supports multiple OpenAI-compatible providers. By default, it targets OpenAI's `gpt-5-nano`, but you can switch providers by setting these environment variables:
+To switch models/providers, just edit the `.env` file.
 
-- `LLM_PROVIDER`: one of `openai` (default), `openrouter`, or `deepseek`.
-- `LLM_MODEL`: override the default model name, e.g. `gpt-4o-mini` or `openrouter/anthropic/claude-3-haiku`.
-- `LLM_TEMPERATURE`: optional float override for sampling temperature.
-- `LLM_API_KEY`: shared fallback for any provider if a provider-specific key isn't set.
-- Provider-specific keys/base URLs:
-  - OpenRouter: `OPENROUTER_API_KEY`, optional `OPENROUTER_BASE_URL` (defaults to `https://openrouter.ai/api/v1`).
-  - DeepSeek: `DEEPSEEK_API_KEY`, optional `DEEPSEEK_BASE_URL` (defaults to `https://api.deepseek.com/v1`).
-  - OpenAI: `OPENAI_API_KEY`, optional `OPENAI_BASE_URL`.
+Example switch to OpenRouter:
 
-Example (switch to OpenRouter):
-
-```bash
-export LLM_PROVIDER="openrouter"
-export OPENROUTER_API_KEY="or-..."
-export LLM_MODEL="openrouter/anthropic/claude-3-haiku"
+```dotenv
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-your-openrouter-key
+OPENROUTER_MODEL=anthropic/claude-3-haiku
+OPENROUTER_TEMPERATURE=0.2
 ```
 
 ### Running Lessons

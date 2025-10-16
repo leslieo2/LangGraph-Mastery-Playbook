@@ -1,6 +1,8 @@
 langchain-community
 langchain-core
 langchain-openai
+httpx[socks]
 langgraph
 langchain-tavily
 trustcall
+python-dotenv

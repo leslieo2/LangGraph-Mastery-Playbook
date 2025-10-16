@@ -43,7 +43,7 @@ def sample_transcript() -> Messages:
     )
 
 
-def inspect_messages(model: str = "gpt-5-nano") -> None:
+def inspect_messages(model: str | None = None) -> None:
     """Show how to invoke an LLM on a list of messages."""
     llm = create_llm(model=model)
     history = list(sample_transcript())
@@ -53,7 +53,7 @@ def inspect_messages(model: str = "gpt-5-nano") -> None:
     print("\nModel reply:", response.content)
 
 
-def inspect_tool_binding(model: str = "gpt-5-nano") -> None:
+def inspect_tool_binding(model: str | None = None) -> None:
     """Demonstrate how to bind simple Python tools to a chat model."""
     llm = create_llm(model=model)
     llm_with_tools = llm.bind_tools([multiply])
@@ -73,7 +73,7 @@ def inspect_add_messages() -> None:
     print("\nCombined messages:", result)
 
 
-def build_tool_calling_app(model: str = "gpt-5-nano"):
+def build_tool_calling_app(model: str | None = None):
     """Create a compiled graph that routes messages through the LLM."""
     llm = create_llm(model=model)
     llm_with_tools = llm.bind_tools([multiply])

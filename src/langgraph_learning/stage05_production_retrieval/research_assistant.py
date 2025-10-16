@@ -47,7 +47,9 @@ class Analyst(BaseModel):
     affiliation: str = Field(description="Primary affiliation of the analyst.")
     name: str = Field(description="Name of the analyst.")
     role: str = Field(description="Role of the analyst in the context of the topic.")
-    description: str = Field(description="Focus, concerns, and motives for the analyst.")
+    description: str = Field(
+        description="Focus, concerns, and motives for the analyst."
+    )
 
     @property
     def persona(self) -> str:
@@ -204,8 +206,12 @@ def build_interview_app(
         return []
 
     def generate_question(state: InterviewState) -> dict[str, Iterable[AIMessage]]:
-        persona_instructions = QUESTION_INSTRUCTIONS.format(goals=state["analyst"].persona)
-        question = llm.invoke([SystemMessage(content=persona_instructions), *state["messages"]])
+        persona_instructions = QUESTION_INSTRUCTIONS.format(
+            goals=state["analyst"].persona
+        )
+        question = llm.invoke(
+            [SystemMessage(content=persona_instructions), *state["messages"]]
+        )
         return {"messages": [question]}
 
     def _format_context(chunks: Sequence[str]) -> str:
@@ -254,7 +260,10 @@ def build_interview_app(
         context = "\n\n".join(state["context"])
         system_message = SECTION_WRITER_INSTRUCTIONS.format(focus=persona_focus)
         section = llm.invoke(
-            [SystemMessage(content=system_message), HumanMessage(content=f"Use these materials:\n{context}")]
+            [
+                SystemMessage(content=system_message),
+                HumanMessage(content=f"Use these materials:\n{context}"),
+            ]
         )
         return {"sections": [section.content]}
 
@@ -268,7 +277,10 @@ def build_interview_app(
             return "save_interview"
         if len(messages) >= 2:
             last_question = messages[-2]
-            if isinstance(last_question, AIMessage) and "Thank you so much for your help" in last_question.content:
+            if (
+                isinstance(last_question, AIMessage)
+                and "Thank you so much for your help" in last_question.content
+            ):
                 return "save_interview"
         return "ask_question"
 
@@ -303,17 +315,23 @@ def build_research_assistant_graph(
 ) -> StateGraph:
     """Create the full research assistant LangGraph application."""
     llm = create_llm(model=model, temperature=0)
-    interview_app = build_interview_app(model=model, max_interview_turns=max_interview_turns)
+    interview_app = build_interview_app(
+        model=model, max_interview_turns=max_interview_turns
+    )
 
     def create_analysts(state: ResearchGraphState) -> dict[str, list[Analyst]]:
         structured = llm.with_structured_output(Perspectives)
         instructions = ANALYST_INSTRUCTIONS.format(
             topic=state["topic"],
-            human_analyst_feedback=state.get("human_analyst_feedback") or "None provided.",
+            human_analyst_feedback=state.get("human_analyst_feedback")
+            or "None provided.",
             max_analysts=state["max_analysts"],
         )
         analysts = structured.invoke(
-            [SystemMessage(content=instructions), HumanMessage(content="Generate the analysts.")]
+            [
+                SystemMessage(content=instructions),
+                HumanMessage(content="Generate the analysts."),
+            ]
         )
         return {"analysts": analysts.analysts}
 
@@ -348,7 +366,10 @@ def build_research_assistant_graph(
             topic=state["topic"], context=formatted_sections
         )
         report = llm.invoke(
-            [SystemMessage(content=system_message), HumanMessage(content="Synthesize the analyst memos.")]
+            [
+                SystemMessage(content=system_message),
+                HumanMessage(content="Synthesize the analyst memos."),
+            ]
         )
         return {"content": report.content}
 
@@ -359,7 +380,10 @@ def build_research_assistant_graph(
             topic=state["topic"], formatted_str_sections=formatted_sections
         )
         response = llm.invoke(
-            [SystemMessage(content=instructions), HumanMessage(content=f"Write the report {section}.")]
+            [
+                SystemMessage(content=instructions),
+                HumanMessage(content=f"Write the report {section}."),
+            ]
         )
         return response.content
 

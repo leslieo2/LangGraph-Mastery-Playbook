@@ -26,7 +26,7 @@ from src.langgraph_learning.utils import (
 )
 
 
-def build_tool_calling_graph(model: str = "gpt-5-nano"):
+def build_tool_calling_graph(model: str | None = None):
     """Create a compiled StateGraph configured for tool routing."""
     llm = create_llm(model=model)
     llm_with_tools = llm.bind_tools([multiply])

@@ -1,38 +1,63 @@
+"""Helpers for constructing ChatOpenAI clients with consistent configuration.
+
+Environment variables resolve in this order:
+1. Explicit arguments passed to `create_llm`.
+2. Provider-specific variables loaded from `.env`
+3. Built-in defaults for the selected provider.
+"""
+
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Callable
 
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 
-DEFAULT_LLM_MODEL = "gpt-5-nano"
-DEFAULT_LLM_TEMPERATURE = 0
-DEFAULT_LLM_PROVIDER = "openai"
+load_dotenv()
 
-_PROVIDER_SETTINGS = {
+_PROVIDER_SETTINGS: dict[str, dict[str, Any]] = {
     "openai": {
-        "api_key_env": "OPENAI_API_KEY",
-        "base_url_env": "OPENAI_BASE_URL",
-        "default_base_url": None,
+        "is_default": True,
+        "env": {
+            "api_key": "OPENAI_API_KEY",
+            "base_url": "OPENAI_BASE_URL",
+            "model": "OPENAI_MODEL",
+            "temperature": "OPENAI_TEMPERATURE",
+        },
+        "defaults": {
+            "base_url": None,
+            "model": "gpt-5-nano",
+            "temperature": 0.0,
+        },
     },
     "openrouter": {
-        "api_key_env": "OPENROUTER_API_KEY",
-        "base_url_env": "OPENROUTER_BASE_URL",
-        "default_base_url": "https://openrouter.ai/api/v1",
+        "env": {
+            "api_key": "OPENROUTER_API_KEY",
+            "base_url": "OPENROUTER_BASE_URL",
+            "model": "OPENROUTER_MODEL",
+            "temperature": "OPENROUTER_TEMPERATURE",
+        },
+        "defaults": {
+            "base_url": "https://openrouter.ai/api/v1",
+            "model": "anthropic/claude-haiku-4.5",
+            "temperature": 0.0,
+        },
     },
     "deepseek": {
-        "api_key_env": "DEEPSEEK_API_KEY",
-        "base_url_env": "DEEPSEEK_BASE_URL",
-        "default_base_url": "https://api.deepseek.com/v1",
+        "env": {
+            "api_key": "DEEPSEEK_API_KEY",
+            "base_url": "DEEPSEEK_BASE_URL",
+            "model": "DEEPSEEK_MODEL",
+            "temperature": "DEEPSEEK_TEMPERATURE",
+        },
+        "defaults": {
+            "base_url": "https://api.deepseek.com/v1",
+            "model": "deepseek-chat",
+            "temperature": 0.0,
+        },
     },
 }
-
-
-def _first_non_empty(*values: Any) -> Any:
-    for value in values:
-        if value:
-            return value
-    return None
 
 
 def _from_env(var_name: str | None) -> str | None:
@@ -48,6 +73,35 @@ def _coerce_float(value: str | None) -> float | None:
         return None
 
 
+def _resolve_value(
+    explicit: Any,
+    env_var: str | None,
+    default: Any,
+    *,
+    transform: Callable[[str], Any] | None = None,
+) -> Any:
+    if explicit is not None:
+        return explicit
+
+    env_value_raw = _from_env(env_var)
+    if env_value_raw is not None:
+        if transform is None:
+            return env_value_raw
+        transformed = transform(env_value_raw)
+        if transformed is not None:
+            return transformed
+
+    return default
+
+
+def _default_provider() -> str:
+    for name, settings in _PROVIDER_SETTINGS.items():
+        if settings.get("is_default"):
+            return name
+    # Fall back to the first configured provider if none is flagged default.
+    return next(iter(_PROVIDER_SETTINGS))
+
+
 def create_llm(
     *,
     provider: str | None = None,
@@ -59,7 +113,7 @@ def create_llm(
 ) -> ChatOpenAI:
     """Return a ChatOpenAI instance using shared defaults and provider-specific config."""
     provider_name = (
-        provider or os.getenv("LLM_PROVIDER") or DEFAULT_LLM_PROVIDER
+        provider or os.getenv("LLM_PROVIDER") or _default_provider()
     ).lower()
     settings = _PROVIDER_SETTINGS.get(provider_name)
     if settings is None:
@@ -71,25 +125,35 @@ def create_llm(
     # All supported providers expose an OpenAI-compatible chat completions API, so
     # ChatOpenAI remains a viable wrapper as long as we supply their base URL and API key.
     # Introducing providers with non-OpenAI protocols will require branching here.
-    resolved_model = model or os.getenv("LLM_MODEL") or DEFAULT_LLM_MODEL
-    resolved_temperature = (
-        temperature
-        if temperature is not None
-        else _coerce_float(os.getenv("LLM_TEMPERATURE"))
-    )
-    if resolved_temperature is None:
-        resolved_temperature = DEFAULT_LLM_TEMPERATURE
+    env_names = settings["env"]
+    defaults = settings["defaults"]
 
-    resolved_api_key = _first_non_empty(
-        api_key,
-        os.getenv("LLM_API_KEY"),
-        _from_env(settings.get("api_key_env")),
+    resolved_model = _resolve_value(
+        model,
+        env_names.get("model"),
+        defaults.get("model"),
     )
-    resolved_base_url = _first_non_empty(
+    if resolved_model is None:
+        raise ValueError(
+            f"No default model configured for provider '{provider_name}'. "
+            "Specify a model explicitly when calling create_llm."
+        )
+    resolved_temperature = _resolve_value(
+        temperature,
+        env_names.get("temperature"),
+        defaults.get("temperature", 0.0),
+        transform=_coerce_float,
+    ) or 0.0
+
+    resolved_api_key = _resolve_value(
+        api_key,
+        env_names.get("api_key"),
+        defaults.get("api_key"),
+    )
+    resolved_base_url = _resolve_value(
         base_url,
-        os.getenv("LLM_BASE_URL"),
-        _from_env(settings.get("base_url_env")),
-        settings.get("default_base_url"),
+        env_names.get("base_url"),
+        defaults.get("base_url"),
     )
 
     config: dict[str, Any] = {

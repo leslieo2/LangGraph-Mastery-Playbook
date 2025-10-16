@@ -19,7 +19,7 @@ from langchain_core.messages import HumanMessage
 from src.langgraph_learning.utils import create_llm, require_env
 
 
-def run_basic_chat(model: str = "gpt-5-nano") -> None:
+def run_basic_chat(model: str | None = None) -> None:
     """Send a single message to an OpenAI chat model."""
 
     llm = create_llm(model=model)

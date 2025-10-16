@@ -60,7 +60,7 @@ class JokeState(TypedDict):
     subject: str
 
 
-def build_map_reduce_app(model: str = "gpt-5-nano"):
+def build_map_reduce_app(model: str | None = None):
     """Compile the joke map-reduce LangGraph app."""
     llm = create_llm(model=model, temperature=0)
     subjects_chain = llm.with_structured_output(Subjects)
