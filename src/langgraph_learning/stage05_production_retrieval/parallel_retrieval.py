@@ -13,12 +13,13 @@ Lesson Flow
 
 from __future__ import annotations
 
+import json as json_module
 import operator
-from typing import Annotated, TypedDict
+from typing import Annotated, Any, TypedDict
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_community.document_loaders import WikipediaLoader
-from langchain_community.tools import TavilySearchResults
+from langchain_tavily import TavilySearch
 from langgraph.graph import END, START, StateGraph
 
 from src.langgraph_learning.utils import (
@@ -35,19 +36,39 @@ class RetrievalState(TypedDict):
     context: Annotated[list[str], operator.add]
 
 
+def _extract_tavily_results(raw: Any) -> list[dict[str, Any]]:
+    """Normalize Tavily tool output into a list of result dictionaries."""
+    if isinstance(raw, ToolMessage):
+        raw = raw.content
+    if isinstance(raw, str):
+        try:
+            raw = json_module.loads(raw)
+        except ValueError:
+            return []
+    if isinstance(raw, dict):
+        raw = raw.get("results", [])
+    if isinstance(raw, list):
+        return [item for item in raw if isinstance(item, dict)]
+    return []
+
+
 def build_parallel_retrieval_graph() -> StateGraph:
     """Wire two retrievers in parallel and merge their outputs for the LLM."""
     llm = create_llm()
-    web_search = TavilySearchResults(max_results=3)
+    web_search = TavilySearch(max_results=3)
 
     def search_web(state: RetrievalState) -> dict[str, list[str]]:
         """Fetch fresh web snippets for the question."""
-        docs = web_search.invoke(state["question"])
+        raw_results = web_search.invoke(state["question"])
+        results = _extract_tavily_results(raw_results)
+        if not results:
+            return {"context": []}
         formatted = "\n\n---\n\n".join(
-            f'<Document href="{doc["url"]}">\n{doc["content"]}\n</Document>'
-            for doc in docs
+            f'<Document href="{doc.get("url", "")}" title="{doc.get("title", "")}">\n'
+            f'{doc.get("content") or doc.get("raw_content", "")}\n</Document>'
+            for doc in results
         )
-        return {"context": [formatted]}
+        return {"context": [formatted] if formatted else []}
 
     def search_wikipedia(state: RetrievalState) -> dict[str, list[str]]:
         """Pull a couple of Wikipedia pages about the topic."""

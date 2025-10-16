@@ -18,6 +18,7 @@ dependencies = [
     "langchain-community",
     "langchain-core",
     "langchain-openai",
+    "langchain-tavily",
     "notebook",
     "tavily-python",
     "trustcall",

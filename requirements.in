@@ -2,4 +2,5 @@ langchain-community
 langchain-core
 langchain-openai
 langgraph
+langchain-tavily
 trustcall

@@ -20,22 +20,43 @@
 Run the Stage 03 map-reduce lesson to see LangGraph parallelism and structured outputs in action:
 
 ```bash
-uv run python -m src.langgraph_learning.stage03_state_architecture.map_reduce_joke_selector
+uv run python -m src.langgraph_learning.stage05_production_retrieval.research_assistant
 ```
 
 Example output (truncated):
 
 ```text
-=== Map-Reduce Demo: animals ===
-{'generate_topics': {'subjects': ['sea otters', 'rescue dogs', 'urban pigeons']}}
-{'generate_joke': {'jokes': ['What do sea otters call a fancy party? A kelp gala!', ...]}}
-{'best_joke': {'best_selected_joke': 'Why did the rescue dog bring a ladder? To reach his high paws!'}}
-Winning joke: Why did the rescue dog bring a ladder? To reach his high paws!
+=== Research Agent Demo: The benefits of adopting LangGraph as an agent framework ===
+=== Launching research assistant for topic: The benefits of adopting LangGraph as an agent framework ===
+
+Draft analyst roster:
+[1] Dr. Maya Chen — Principal Systems Architect (LangGraph Research Lab)
+Theme: Modularity and composability in LangGraph. Focus on designing modular agent components, plug-and-play orchestration patterns, and reusable graph-based workflows. Seeks best practices for decoupled components and versioning to maximize reliability and reuse, while managing integration complexity.
+--------------------------------------------------
+[2] Prof. Alejandro Ruiz — Professor of Distributed Systems (Institute for Scalable AI, Techland University)
+Theme: Performance and scalability of graph-based agent reasoning. Evaluates runtime performance, latency, throughput, and resource utilization across large agent populations, with benchmarking and exploration of data locality and fault tolerance in cloud environments.
+--------------------------------------------------
+[3] Sophia Patel — Developer Advocate & Ecosystem Lead (LangGraph Platform Team)
+Theme: Developer experience, tooling, governance, and safety. Focuses on SDKs, docs, onboarding, and community adoption, while ensuring reproducibility, policy enforcement, and governance mechanisms to prevent fragmentation and promote safe, maintainable deployments.
+--------------------------------------------------
+
+Applying editorial feedback...
+
+Updated analyst roster:
+[1] Dr. Maya Chen — Principal Systems Architect (LangGraph Research Lab)
+Theme: Modularity and composability in LangGraph. Focus on designing modular agent components, plug-and-play orchestration patterns, and reusable graph-based workflows. Seeks best practices for decoupled components and versioning to maximize reliability and reuse, while managing integration complexity.
+--------------------------------------------------
+[2] Prof. Alejandro Ruiz — Professor of Distributed Systems (Institute for Scalable AI, Techland University)
+Theme: Performance and scalability of graph-based agent reasoning. Evaluates runtime performance, latency, throughput, and resource utilization across large agent populations, with benchmarking and exploration of data locality and fault tolerance in cloud environments.
+--------------------------------------------------
+[3] Sophia Patel — Developer Advocate & Ecosystem Lead (LangGraph Platform Team)
+Theme: Developer experience, tooling, governance, and safety. Focuses on SDKs, docs, onboarding, and community adoption, while ensuring reproducibility, policy enforcement, and governance mechanisms to prevent fragmentation and promote safe, maintainable deployments.
+--------------------------------------------------
 ```
 
 The lesson also saves a graph diagram you can reference or share:
 
-![Map-Reduce Graph](src/langgraph_learning/stage03_state_architecture/artifacts/map_reduce_jokes.png)
+![Research Agent Graph](src/langgraph_learning/stage05_production_retrieval/artifacts/research_assistant.png)
 
 ## Why This Project?
 
@@ -113,6 +134,7 @@ python -m src.langgraph_learning.stage01_foundations.tool_calling_chain
 
 # Stage 02 memory systems
 python -m src.langgraph_learning.stage02_memory_and_personalization.agent_with_memory
+python -m src.langgraph_learning.stage02_memory_and_personalization.long_term_memory_personalization_demo
 python -m src.langgraph_learning.stage02_memory_and_personalization.trustcall_memory_agent
 
 # Stage 04 operational control

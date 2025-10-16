@@ -8,12 +8,12 @@ What You'll Learn
 Lesson Flow
 1. Validate environment variables with `require_env`.
 2. Instantiate `ChatOpenAI`, create a `HumanMessage`, and observe the model reply.
-3. Call `TavilySearchResults` with a sample query and print the returned metadata.
+3. Call `TavilySearch` with a sample query and print the returned metadata.
 """
 
 from __future__ import annotations
 
-from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_tavily import TavilySearch
 from langchain_core.messages import HumanMessage
 
 from src.langgraph_learning.utils import create_llm, require_env
@@ -31,7 +31,7 @@ def run_basic_chat(model: str = "gpt-5-nano") -> None:
 def run_tavily_search(query: str = "What is LangGraph?") -> None:
     """Execute a Tavily web search and display the raw documents."""
 
-    tavily_search = TavilySearchResults(max_results=3)
+    tavily_search = TavilySearch(max_results=3)
     search_docs = tavily_search.invoke(query)
     print("Tavily search results:", search_docs)
 
