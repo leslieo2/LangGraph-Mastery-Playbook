@@ -12,12 +12,12 @@ Lesson Flow
 from __future__ import annotations
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
+    create_llm,
     add,
     divide,
     multiply,
@@ -30,7 +30,7 @@ from src.langgraph_learning.utils import (
 def build_agent_graph(model: str = "gpt-5-nano"):
     """Compile a reactive agent that remembers prior exchanges."""
     tools = [add, multiply, divide]
-    llm = ChatOpenAI(model=model)
+    llm = create_llm(model=model)
     llm_with_tools = llm.bind_tools(tools, parallel_tool_calls=False)
 
     sys_msg = SystemMessage(

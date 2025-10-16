@@ -27,8 +27,11 @@ if __package__ in {None, ""}:
     if project_root not in sys.path:
         sys.path.append(project_root)
 
-from src.langgraph_learning.stage03_memory_systems.configuration import MemoryConfiguration
+from src.langgraph_learning.stage03_memory_systems.configuration import (
+    MemoryConfiguration,
+)
 from src.langgraph_learning.utils import (
+    create_llm,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_env,
@@ -57,7 +60,7 @@ Update the user information based on the chat history below:"""
 
 def build_memory_graph(model: ChatOpenAI | None = None):
     """Compile a graph that reflects on conversations and stores user memory."""
-    llm = model or ChatOpenAI(model="gpt-5-nano", temperature=0)
+    llm = model or create_llm()
 
     def _config(config: RunnableConfig) -> MemoryConfiguration:
         return MemoryConfiguration.from_runnable_config(config)
@@ -97,9 +100,7 @@ def build_memory_graph(model: ChatOpenAI | None = None):
     checkpointer = MemorySaver()
 
     graph = builder.compile(store=long_term_memory, checkpointer=checkpointer)
-    save_graph_image(
-        graph, filename="artifacts/memory_store_graph.png", xray=True
-    )
+    save_graph_image(graph, filename="artifacts/memory_store_graph.png", xray=True)
     return graph
 
 

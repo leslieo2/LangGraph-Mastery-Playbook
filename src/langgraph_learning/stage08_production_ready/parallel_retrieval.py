@@ -15,12 +15,12 @@ import operator
 from typing import Annotated, TypedDict
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
 from langchain_community.document_loaders import WikipediaLoader
 from langchain_community.tools import TavilySearchResults
 from langgraph.graph import END, START, StateGraph
 
 from src.langgraph_learning.utils import (
+    create_llm,
     maybe_enable_langsmith,
     require_env,
     save_graph_image,
@@ -35,7 +35,7 @@ class RetrievalState(TypedDict):
 
 def build_parallel_retrieval_graph() -> StateGraph:
     """Wire two retrievers in parallel and merge their outputs for the LLM."""
-    llm = ChatOpenAI(model="gpt-5-nano", temperature=0)
+    llm = create_llm()
     web_search = TavilySearchResults(max_results=3)
 
     def search_web(state: RetrievalState) -> dict[str, list[str]]:

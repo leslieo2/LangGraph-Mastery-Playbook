@@ -50,6 +50,27 @@ export TAVILY_API_KEY="tvly-..."      # Stage 08 并行检索示例需要
 export LANGSMITH_API_KEY="ls-..."     # 可选，启用支持课程的链路追踪
 ```
 
+### LLM 模型 / 供应商配置
+
+所有课程都通过 `src.langgraph_learning.utils.create_llm` 来构造聊天模型，该函数支持多家兼容 OpenAI 协议的供应商。默认使用 OpenAI 的 `gpt-5-nano`，也可以通过以下环境变量切换：
+
+- `LLM_PROVIDER`：可选 `openai`（默认）、`openrouter`、`deepseek`。
+- `LLM_MODEL`：覆盖默认模型名称，例如 `gpt-4o-mini` 或 `openrouter/anthropic/claude-3-haiku`。
+- `LLM_TEMPERATURE`：可选的浮点数，覆盖采样温度。
+- `LLM_API_KEY`：任何供应商的通用兜底密钥（若未设置对应供应商的专属变量）。
+- 供应商专属密钥 / Base URL：
+  - OpenRouter：`OPENROUTER_API_KEY`，可选 `OPENROUTER_BASE_URL`（默认 `https://openrouter.ai/api/v1`）。
+  - DeepSeek：`DEEPSEEK_API_KEY`，可选 `DEEPSEEK_BASE_URL`（默认 `https://api.deepseek.com/v1`）。
+  - OpenAI：`OPENAI_API_KEY`，可选 `OPENAI_BASE_URL`。
+
+例如切换到 OpenRouter：
+
+```bash
+export LLM_PROVIDER="openrouter"
+export OPENROUTER_API_KEY="or-..."
+export LLM_MODEL="openrouter/anthropic/claude-3-haiku"
+```
+
 ### 运行课程脚本
 
 每个脚本都可以通过 `python -m` 运行（使用 uv 时也可用 `uv run ...`）：

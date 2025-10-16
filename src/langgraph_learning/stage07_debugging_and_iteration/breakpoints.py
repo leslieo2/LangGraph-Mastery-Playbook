@@ -16,12 +16,12 @@ import os
 from uuid import uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
+    create_llm,
     add,
     divide,
     maybe_enable_langsmith,
@@ -47,7 +47,7 @@ class State(MessagesState):
 def build_tool_agent_graph_with_breakpoint():
     tools = [add, multiply, divide]
 
-    llm = ChatOpenAI(model="gpt-5-nano")
+    llm = create_llm()
     llm_with_tools = llm.bind_tools(tools)
 
     sys_msg = SystemMessage(

@@ -12,11 +12,11 @@ Lesson Flow
 from __future__ import annotations
 
 from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
+    create_llm,
     multiply,
     pretty_print_messages,
     require_env,
@@ -26,7 +26,7 @@ from src.langgraph_learning.utils import (
 
 def build_tool_calling_graph(model: str = "gpt-5-nano"):
     """Create a compiled StateGraph configured for tool routing."""
-    llm = ChatOpenAI(model=model)
+    llm = create_llm(model=model)
     llm_with_tools = llm.bind_tools([multiply])
 
     def tool_calling_llm(state: MessagesState):

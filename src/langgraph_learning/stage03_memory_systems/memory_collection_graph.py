@@ -33,8 +33,11 @@ if __package__ in {None, ""}:
     if project_root not in sys.path:
         sys.path.append(project_root)
 
-from src.langgraph_learning.stage03_memory_systems.configuration import MemoryConfiguration
+from src.langgraph_learning.stage03_memory_systems.configuration import (
+    MemoryConfiguration,
+)
 from src.langgraph_learning.utils import (
+    create_llm,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_env,
@@ -61,7 +64,7 @@ Insert brand new memories or update existing ones as needed."""
 
 def build_memory_collection_graph(model: ChatOpenAI | None = None):
     """Compile a graph that stores multiple user memories via TrustCall."""
-    llm = model or ChatOpenAI(model="gpt-5-nano", temperature=0)
+    llm = model or create_llm()
     extractor = create_extractor(
         llm,
         tools=[Memory],
@@ -111,9 +114,7 @@ def build_memory_collection_graph(model: ChatOpenAI | None = None):
     builder.add_edge("write_memory", END)
 
     graph = builder.compile(store=InMemoryStore(), checkpointer=MemorySaver())
-    save_graph_image(
-        graph, filename="artifacts/memory_collection_graph.png", xray=True
-    )
+    save_graph_image(graph, filename="artifacts/memory_collection_graph.png", xray=True)
     return graph
 
 

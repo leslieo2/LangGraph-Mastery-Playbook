@@ -24,6 +24,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.langgraph_learning.utils import (
+    create_llm,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_env,
@@ -101,7 +102,7 @@ def run_conversation(graph, prompts: Iterable[str], thread_id: str) -> None:
 def main() -> None:
     require_env("OPENAI_API_KEY")
     maybe_enable_langsmith()
-    model = ChatOpenAI(model="gpt-5-nano", temperature=0)
+    model = create_llm()
 
     graph = build_chatbot_graph(model)
 

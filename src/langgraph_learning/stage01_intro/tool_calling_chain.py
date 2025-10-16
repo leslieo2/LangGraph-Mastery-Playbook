@@ -15,11 +15,11 @@ from __future__ import annotations
 from typing import Sequence
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
-from langchain_openai import ChatOpenAI
 from langgraph.constants import END, START
 from langgraph.graph import MessagesState, StateGraph, add_messages
 
 from src.langgraph_learning.utils import (
+    create_llm,
     multiply,
     pretty_print_messages,
     require_env,
@@ -43,7 +43,7 @@ def sample_transcript() -> Messages:
 
 def inspect_messages(model: str = "gpt-5-nano") -> None:
     """Show how to invoke an LLM on a list of messages."""
-    llm = ChatOpenAI(model=model)
+    llm = create_llm(model=model)
     history = list(sample_transcript())
     pretty_print_messages(history, header="Input messages")
 
@@ -53,7 +53,7 @@ def inspect_messages(model: str = "gpt-5-nano") -> None:
 
 def inspect_tool_binding(model: str = "gpt-5-nano") -> None:
     """Demonstrate how to bind simple Python tools to a chat model."""
-    llm = ChatOpenAI(model=model)
+    llm = create_llm(model=model)
     llm_with_tools = llm.bind_tools([multiply])
     response = llm_with_tools.invoke(
         [HumanMessage(content="What is 2 multiplied by 3?")]
@@ -73,7 +73,7 @@ def inspect_add_messages() -> None:
 
 def build_tool_calling_app(model: str = "gpt-5-nano"):
     """Create a compiled graph that routes messages through the LLM."""
-    llm = ChatOpenAI(model=model)
+    llm = create_llm(model=model)
     llm_with_tools = llm.bind_tools([multiply])
 
     def llm_node(state: MessagesState):

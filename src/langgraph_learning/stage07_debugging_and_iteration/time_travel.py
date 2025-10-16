@@ -15,12 +15,12 @@ import os
 from uuid import uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
+    create_llm,
     add,
     divide,
     maybe_enable_langsmith,
@@ -34,7 +34,7 @@ def build_time_travel_graph():
     """Assemble the arithmetic agent and enable checkpointing."""
 
     tools = [add, multiply, divide]
-    llm = ChatOpenAI(model="gpt-5-nano")
+    llm = create_llm()
     llm_with_tools = llm.bind_tools(tools)
     sys_msg = SystemMessage(
         content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."

@@ -51,6 +51,27 @@ export TAVILY_API_KEY="tvly-..."      # Needed for Stage 08 parallel retrieval
 export LANGSMITH_API_KEY="ls-..."     # Optional, enables tracing in supported lessons
 ```
 
+### LLM Provider Configuration
+
+All lessons create chat models through `src.langgraph_learning.utils.create_llm`, which supports multiple OpenAI-compatible providers. By default, it targets OpenAI's `gpt-5-nano`, but you can switch providers by setting these environment variables:
+
+- `LLM_PROVIDER`: one of `openai` (default), `openrouter`, or `deepseek`.
+- `LLM_MODEL`: override the default model name, e.g. `gpt-4o-mini` or `openrouter/anthropic/claude-3-haiku`.
+- `LLM_TEMPERATURE`: optional float override for sampling temperature.
+- `LLM_API_KEY`: shared fallback for any provider if a provider-specific key isn't set.
+- Provider-specific keys/base URLs:
+  - OpenRouter: `OPENROUTER_API_KEY`, optional `OPENROUTER_BASE_URL` (defaults to `https://openrouter.ai/api/v1`).
+  - DeepSeek: `DEEPSEEK_API_KEY`, optional `DEEPSEEK_BASE_URL` (defaults to `https://api.deepseek.com/v1`).
+  - OpenAI: `OPENAI_API_KEY`, optional `OPENAI_BASE_URL`.
+
+Example (switch to OpenRouter):
+
+```bash
+export LLM_PROVIDER="openrouter"
+export OPENROUTER_API_KEY="or-..."
+export LLM_MODEL="openrouter/anthropic/claude-3-haiku"
+```
+
 ### Running Lessons
 
 Each script is executable via `python -m` (uv users can also run `uv run ...`):

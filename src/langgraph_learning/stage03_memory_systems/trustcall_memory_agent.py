@@ -34,8 +34,11 @@ if __package__ in {None, ""}:
     if project_root not in sys.path:
         sys.path.append(project_root)
 
-from src.langgraph_learning.stage03_memory_systems.configuration import MemoryConfiguration
+from src.langgraph_learning.stage03_memory_systems.configuration import (
+    MemoryConfiguration,
+)
 from src.langgraph_learning.utils import (
+    create_llm,
     ToolCallSpy,
     maybe_enable_langsmith,
     pretty_print_messages,
@@ -131,7 +134,7 @@ Current instructions:
 
 def build_trustcall_agent(model: ChatOpenAI | None = None):
     """Compile a multi-memory LangGraph agent powered by TrustCall."""
-    llm = model or ChatOpenAI(model="gpt-5-nano", temperature=0)
+    llm = model or create_llm()
     profile_extractor = create_extractor(
         llm, tools=[Profile], tool_choice="Profile", enable_inserts=True
     )
@@ -293,9 +296,7 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
     builder.add_edge("update_instructions", "task_maistro")
 
     graph = builder.compile(store=InMemoryStore(), checkpointer=MemorySaver())
-    save_graph_image(
-        graph, filename="artifacts/trustcall_memory_agent.png", xray=True
-    )
+    save_graph_image(graph, filename="artifacts/trustcall_memory_agent.png", xray=True)
     return graph
 
 

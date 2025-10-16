@@ -13,15 +13,14 @@ from __future__ import annotations
 
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
 
-from src.langgraph_learning.utils import require_env
+from src.langgraph_learning.utils import create_llm, require_env
 
 
 def run_basic_chat(model: str = "gpt-5-nano") -> None:
     """Send a single message to an OpenAI chat model."""
-    require_env("OPENAI_API_KEY")
-    llm = ChatOpenAI(model=model, temperature=0)
+
+    llm = create_llm(model=model)
     messages = [HumanMessage(content="Who are you?", name="Leslie")]
     response = llm.invoke(messages)
     print("Model reply:", response.content)
@@ -29,7 +28,7 @@ def run_basic_chat(model: str = "gpt-5-nano") -> None:
 
 def run_tavily_search(query: str = "What is LangGraph?") -> None:
     """Execute a Tavily web search and display the raw documents."""
-    require_env("TAVILY_API_KEY")
+
     tavily_search = TavilySearchResults(max_results=3)
     search_docs = tavily_search.invoke(query)
     print("Tavily search results:", search_docs)
@@ -41,4 +40,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    require_env("OPENAI_API_KEY")
+    require_env("TAVILY_API_KEY")
     main()

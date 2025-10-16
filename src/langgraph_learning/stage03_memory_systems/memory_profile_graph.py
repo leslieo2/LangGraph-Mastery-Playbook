@@ -31,8 +31,11 @@ if __package__ in {None, ""}:
     if project_root not in sys.path:
         sys.path.append(project_root)
 
-from src.langgraph_learning.stage03_memory_systems.configuration import MemoryConfiguration
+from src.langgraph_learning.stage03_memory_systems.configuration import (
+    MemoryConfiguration,
+)
 from src.langgraph_learning.utils import (
+    create_llm,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_env,
@@ -76,7 +79,7 @@ def _format_profile(profile: dict[str, object] | None) -> str:
 
 def build_profile_graph(model: ChatOpenAI | None = None):
     """Compile a graph that maintains a structured user profile."""
-    llm = model or ChatOpenAI(model="gpt-5-nano", temperature=0)
+    llm = model or create_llm()
     extractor = create_extractor(
         llm,
         tools=[Profile],
@@ -117,9 +120,9 @@ def build_profile_graph(model: ChatOpenAI | None = None):
                 profile_payload = profile_payload.model_dump(mode="json")
             elif not isinstance(profile_payload, dict):
                 try:
-                    profile_payload = Profile.model_validate(profile_payload).model_dump(
-                        mode="json"
-                    )
+                    profile_payload = Profile.model_validate(
+                        profile_payload
+                    ).model_dump(mode="json")
                 except ValidationError:
                     profile_payload = {}
             existing_payload = [
@@ -172,9 +175,7 @@ def build_profile_graph(model: ChatOpenAI | None = None):
     builder.add_edge("update_profile", END)
 
     graph = builder.compile(store=InMemoryStore(), checkpointer=MemorySaver())
-    save_graph_image(
-        graph, filename="artifacts/profile_memory_graph.png", xray=True
-    )
+    save_graph_image(graph, filename="artifacts/profile_memory_graph.png", xray=True)
     return graph
 
 

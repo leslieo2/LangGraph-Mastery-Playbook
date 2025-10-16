@@ -23,6 +23,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.langgraph_learning.utils import (
+    create_llm,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_env,
@@ -172,7 +173,7 @@ def demonstrate_trim_messages(
 def main() -> None:
     require_env("OPENAI_API_KEY")
     maybe_enable_langsmith()
-    llm = ChatOpenAI(model="gpt-5-nano")
+    llm = create_llm()
 
     _, basic_output = demonstrate_basic_messages(llm)
     reducer_messages, reducer_output = demonstrate_filter_with_reducer(llm)
