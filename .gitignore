@@ -23,6 +23,3 @@ env/
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# Default: ignore other PNGs
-*.png

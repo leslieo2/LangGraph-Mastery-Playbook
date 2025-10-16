@@ -1,8 +1,41 @@
-[English](README.md) | [中文版本](README.zh.md)
-
 # LangGraph Mastery Playbook
 
-An open-source, code-first curriculum for mastering LangGraph. Instead of scattered notebooks, each lesson is a runnable Python script with a clear learning objective, a documented lesson flow, and a shared utility toolkit. The result is a reproducible, test-friendly training path that scales from quickstart experiments all the way to production-ready orchestration.
+[中文版本](README.zh.md)
+
+![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg) ![uv](https://img.shields.io/badge/uv-ready-5A45FF.svg) ![CI Friendly](https://img.shields.io/badge/ci-friendly-success.svg) ![License](https://img.shields.io/badge/license-MIT-black.svg)
+
+**Ship LangGraph agents from day one with a runnable, stage-based curriculum.**
+
+> 🚀 Kick off with `uv run python -m src.langgraph_learning.stage01_foundations.quickstart` to ping an LLM and run a Tavily search tool directly from your terminal.
+
+## TL;DR
+
+- Follow a five-stage path that upgrades your LangGraph skills from graph basics to production retrieval systems.
+- Every lesson is a pure-Python module with `main()` plus artifacts for graphs, checkpoints, and streaming logs.
+- Works with OpenAI, OpenRouter, DeepSeek, or any compatible endpoint through `utils.create_llm`.
+- Designed for builders who prefer reproducible scripts over notebooks—ideal for demos, CI, or team onboarding.
+
+## Quickstart Demo
+
+Run the Stage 03 map-reduce lesson to see LangGraph parallelism and structured outputs in action:
+
+```bash
+uv run python -m src.langgraph_learning.stage03_state_architecture.map_reduce_joke_selector
+```
+
+Example output (truncated):
+
+```text
+=== Map-Reduce Demo: animals ===
+{'generate_topics': {'subjects': ['sea otters', 'rescue dogs', 'urban pigeons']}}
+{'generate_joke': {'jokes': ['What do sea otters call a fancy party? A kelp gala!', ...]}}
+{'best_joke': {'best_selected_joke': 'Why did the rescue dog bring a ladder? To reach his high paws!'}}
+Winning joke: Why did the rescue dog bring a ladder? To reach his high paws!
+```
+
+The lesson also saves a graph diagram you can reference or share:
+
+![Map-Reduce Graph](src/langgraph_learning/stage03_state_architecture/artifacts/map_reduce_jokes.png)
 
 ## Why This Project?
 
@@ -13,13 +46,13 @@ An open-source, code-first curriculum for mastering LangGraph. Instead of scatte
 
 ## Learning Roadmap
 
-| Stage | Theme | Highlights |
-| --- | --- | --- |
-| `stage01_foundations` | Foundations & Core Graph Skills | Quickstart, state graphs, tool routing, reactive agents |
-| `stage02_memory_and_personalization` | Memory Systems & Personalization | Checkpoints, TrustCall, SQLite persistence, profile updates |
-| `stage03_state_architecture` | State Architecture & Dataflows | Schema strategies, reducer patterns, map-reduce, sub-graphs |
-| `stage04_operational_control` | Operational Control & Observability | History trimming, streaming modes, breakpoints, time travel |
-| `stage05_production_retrieval` | Production Retrieval & Synthesis | Parallel retrieval, context merging, production checks |
+| Stage | Focus & Flagship Lesson | Skill Gains | Est. Time |
+| --- | --- | --- | --- |
+| `stage01_foundations` → `quickstart` | Build your first LangGraph agent that chats and calls a Tavily search tool. | Validate credentials early, invoke chat models, and integrate third-party tools. | ~45 min |
+| `stage02_memory_and_personalization` → `agent_with_memory` | Add conversation memory backed by checkpoints and persistence. | Configure `MemorySaver`, reuse prior turns, and checkpoint graph state between runs. | ~60 min |
+| `stage03_state_architecture` → `map_reduce_joke_selector` | Fan out work with map-reduce and structured outputs. | Design typed state, parallelize nodes with `Send`, and synthesize results. | ~75 min |
+| `stage04_operational_control` → `breakpoints` | Debug and steer long-running graphs in real time. | Use breakpoints, streaming modes, history trimming, and trust-call inspection. | ~60 min |
+| `stage05_production_retrieval` → `parallel_retrieval` | Ship production-ready retrieval and synthesis workflows. | Blend parallel retrievers, merge context chunks, and add production guardrails. | ~90 min |
 
 Every Python file begins with a “What You'll Learn / Lesson Flow” docstring so you can skim the topic before running it.
 
