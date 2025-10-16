@@ -7,7 +7,7 @@ An open-source, code-first curriculum for mastering LangGraph. Instead of scatte
 ## Why This Project?
 
 - **Script-first tutorials.** Most LangGraph examples online live in Jupyter notebooks; great for reading, not ideal for reuse. Every tutorial here is a standalone Python module with a `main()` entry point and stage-specific helpers.
-- **Structured learning path.** Lessons are grouped into numbered stages so you always know what to study next—from Stage 01 fundamentals to Stage 08 production patterns.
+- **Structured learning path.** Lessons are grouped into numbered stages so you always know what to study next—from Stage 01 foundational graph skills to Stage 05 production retrieval pipelines.
 - **Consistent tooling.** Shared utilities handle graph visualization, environment checks, TrustCall inspection, and common math tools. Less boilerplate, more focus on concepts.
 - **Automation friendly.** Because everything is pure Python, you can run the entire course headlessly, integrate it into CI pipelines, or extend it with your own tests.
 
@@ -15,14 +15,11 @@ An open-source, code-first curriculum for mastering LangGraph. Instead of scatte
 
 | Stage | Theme | Highlights |
 | --- | --- | --- |
-| `stage01_intro` | Foundations | Quickstart, state graphs, tool-calling chains |
-| `stage02_agent_flows` | Building Agents | Reactive loops, tool routing |
-| `stage03_memory_systems` | Memory Strategies | Checkpoints, TrustCall, SQLite persistence |
-| `stage04_state_management` | State Schemas | TypedDict vs dataclass vs Pydantic, reducers |
-| `stage05_conversation_control` | Message Windows | Reducer filtering, selective prompts, trimming |
-| `stage06_streaming_and_monitoring` | Live Runs | Streaming modes, summaries, token inspection |
-| `stage07_debugging_and_iteration` | Troubleshooting | Breakpoints, dynamic interrupts, time travel |
-| `stage08_production_ready` | Production Patterns | Parallel retrieval, context synthesis |
+| `stage01_foundations` | Foundations & Core Graph Skills | Quickstart, state graphs, tool routing, reactive agents |
+| `stage02_memory_and_personalization` | Memory Systems & Personalization | Checkpoints, TrustCall, SQLite persistence, profile updates |
+| `stage03_state_architecture` | State Architecture & Dataflows | Schema strategies, reducer patterns, map-reduce, sub-graphs |
+| `stage04_operational_control` | Operational Control & Observability | History trimming, streaming modes, breakpoints, time travel |
+| `stage05_production_retrieval` | Production Retrieval & Synthesis | Parallel retrieval, context merging, production checks |
 
 Every Python file begins with a “What You'll Learn / Lesson Flow” docstring so you can skim the topic before running it.
 
@@ -47,7 +44,7 @@ Set the API keys required for the lessons you plan to run:
 
 ```bash
 export OPENAI_API_KEY="sk-..."        # Required for all LLM demos
-export TAVILY_API_KEY="tvly-..."      # Needed for Stage 08 parallel retrieval
+export TAVILY_API_KEY="tvly-..."      # Needed for Stage 05 parallel retrieval
 export LANGSMITH_API_KEY="ls-..."     # Optional, enables tracing in supported lessons
 ```
 
@@ -78,15 +75,15 @@ Each script is executable via `python -m` (uv users can also run `uv run ...`):
 
 ```bash
 # Stage 01 examples
-python -m src.langgraph_learning.stage01_intro.quickstart
-python -m src.langgraph_learning.stage01_intro.tool_calling_chain
+python -m src.langgraph_learning.stage01_foundations.quickstart
+python -m src.langgraph_learning.stage01_foundations.tool_calling_chain
 
-# Stage 03 memory systems
-python -m src.langgraph_learning.stage03_memory_systems.agent_with_memory
-python -m src.langgraph_learning.stage03_memory_systems.trustcall_memory_agent
+# Stage 02 memory systems
+python -m src.langgraph_learning.stage02_memory_and_personalization.agent_with_memory
+python -m src.langgraph_learning.stage02_memory_and_personalization.trustcall_memory_agent
 
-# Stage 07 debugging flows
-python -m src.langgraph_learning.stage07_debugging_and_iteration.breakpoints
+# Stage 04 operational control
+python -m src.langgraph_learning.stage04_operational_control.breakpoints
 ```
 
 Most lessons generate a graph visualization (PNG) inside the module’s `artifacts/` directory. Streaming lessons print incremental updates; debugging lessons may prompt for manual approval.

@@ -24,3 +24,5 @@ env/
 .DS_Store
 Thumbs.db
 
+# Default: ignore other PNGs
+*.png

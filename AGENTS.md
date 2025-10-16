@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-The Python package lives in `src/langgraph_learning`, organized into numbered stage folders (`stage01_intro` … `stage08_production_ready`) plus shared helpers in `utils`. Each lesson exposes a `main()` entry point and writes optional artifacts into its own `artifacts/` subdirectory. Distribution metadata in `build/` and `LangGraph_Mastery_Playbook.egg-info/` is generated—avoid editing it manually.
+The Python package lives in `src/langgraph_learning`, organized into numbered stage folders (`stage01_foundations` … `stage05_production_retrieval`) plus shared helpers in `utils`. Each lesson exposes a `main()` entry point and writes optional artifacts into its own `artifacts/` subdirectory. Distribution metadata in `build/` and `LangGraph_Mastery_Playbook.egg-info/` is generated—avoid editing it manually.
 
 ## Build, Test, and Development Commands
 Create an environment and install the package with uv:
@@ -10,7 +10,7 @@ uv venv
 source .venv/bin/activate
 uv pip install -e .
 ```
-Sanity-check syntax with `uv run python -m compileall src`. Run a lesson via `uv run python -m src.langgraph_learning.stage03_memory_systems.agent_with_memory`. When preparing a release wheel, use `uv build` (outputs to `build/`).
+Sanity-check syntax with `uv run python -m compileall src`. Run a lesson via `uv run python -m src.langgraph_learning.stage02_memory_and_personalization.agent_with_memory`. When preparing a release wheel, use `uv build` (outputs to `build/`).
 
 ## Coding Style & Naming Conventions
 Target Python 3.10+. Follow [Black](https://black.readthedocs.io/) defaults (`black .`) and keep imports sorted per Black’s heuristic. Stage modules should retain the `stage##_topic` naming and begin with a “What You’ll Learn / Lesson Flow” docstring. Prefer type hints for public functions, wrap long prompt literals at sensible boundaries, and centralize provider config through `utils.create_llm`.

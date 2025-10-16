@@ -7,7 +7,7 @@
 ## 项目亮点
 
 - **脚本优先的教程。** 大多数 LangGraph 示例都放在 Jupyter Notebook 里——读起来方便，复用起来麻烦。本项目的每个示例都是带 `main()` 入口的独立 Python 模块，并按阶段提供专属辅助工具。
-- **有结构的学习路线。** 课程分为编号的阶段，从 Stage 01 基础到 Stage 08 生产模式，每一步都知道接下来该学什么。
+- **有结构的学习路线。** 课程分为编号的阶段，从 Stage 01 基础图技能到 Stage 05 生产级检索与综合，每一步都知道接下来该学什么。
 - **一致的工具体系。** 共享工具负责图形可视化、环境检查、TrustCall 分析，以及常用的数学工具。减少样板代码，把时间留给核心概念。
 - **便于自动化。** 全部基于纯 Python，你可以无界面运行整套课程，集成到 CI 流水线，或扩展成自己的测试。
 
@@ -15,14 +15,11 @@
 
 | Stage | 主题 | 亮点 |
 | --- | --- | --- |
-| `stage01_intro` | 基础入门 | 快速上手、状态图、工具调用链 |
-| `stage02_agent_flows` | 构建智能体 | 反应式循环、工具路由 |
-| `stage03_memory_systems` | 记忆策略 | 检查点、TrustCall、SQLite 持久化 |
-| `stage04_state_management` | 状态建模 | TypedDict vs dataclass vs Pydantic、reducers |
-| `stage05_conversation_control` | 对话控制 | Reducer 过滤、选择性提示、裁剪消息 |
-| `stage06_streaming_and_monitoring` | 实时监控 | 流式模式、总结、Token 监控 |
-| `stage07_debugging_and_iteration` | 调试迭代 | 断点、动态中断、时间回溯 |
-| `stage08_production_ready` | 生产实践 | 并行检索、上下文综合 |
+| `stage01_foundations` | 基础与核心图技能 | 快速上手、状态图、工具路由、反应式代理 |
+| `stage02_memory_and_personalization` | 记忆系统与个性化 | 检查点、TrustCall、SQLite 持久化、档案更新 |
+| `stage03_state_architecture` | 状态架构与数据流 | 模型结构策略、Reducer 模式、Map-Reduce、子图 |
+| `stage04_operational_control` | 运行控制与可观测性 | 历史裁剪、流式模式、断点、时间回溯 |
+| `stage05_production_retrieval` | 生产级检索与综合 | 并行检索、上下文合并、上线检查 |
 
 每个 Python 文件开头都有 “What You'll Learn / Lesson Flow” 的文档字符串，运行前即可快速了解内容。
 
@@ -46,7 +43,7 @@ uv pip install .
 
 ```bash
 export OPENAI_API_KEY="sk-..."        # 所有 LLM 演示都需要
-export TAVILY_API_KEY="tvly-..."      # Stage 08 并行检索示例需要
+export TAVILY_API_KEY="tvly-..."      # Stage 05 并行检索示例需要
 export LANGSMITH_API_KEY="ls-..."     # 可选，启用支持课程的链路追踪
 ```
 
@@ -77,15 +74,15 @@ export LLM_MODEL="openrouter/anthropic/claude-3-haiku"
 
 ```bash
 # Stage 01 示例
-python -m src.langgraph_learning.stage01_intro.quickstart
-python -m src.langgraph_learning.stage01_intro.tool_calling_chain
+python -m src.langgraph_learning.stage01_foundations.quickstart
+python -m src.langgraph_learning.stage01_foundations.tool_calling_chain
 
-# Stage 03 记忆系统
-python -m src.langgraph_learning.stage03_memory_systems.agent_with_memory
-python -m sr.langgraph_learning.stage03_memory_systems.trustcall_memory_agent
+# Stage 02 记忆系统
+python -m src.langgraph_learning.stage02_memory_and_personalization.agent_with_memory
+python -m src.langgraph_learning.stage02_memory_and_personalization.trustcall_memory_agent
 
-# Stage 07 调试流程
-python -m src.langgraph_learning.stage07_debugging_and_iteration.breakpoints
+# Stage 04 调试与监控
+python -m src.langgraph_learning.stage04_operational_control.breakpoints
 ```
 
 多数课程会在对应模块的 `artifacts/` 目录下生成图形化的 PNG；流式课程会输出增量信息；调试课程可能会提示手动确认。

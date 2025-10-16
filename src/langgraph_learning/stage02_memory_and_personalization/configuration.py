@@ -1,4 +1,4 @@
-"""Shared configuration helpers for Stage 03 memory tutorials."""
+"""Shared configuration helpers for Stage 02 memory tutorials."""
 
 from __future__ import annotations
 
