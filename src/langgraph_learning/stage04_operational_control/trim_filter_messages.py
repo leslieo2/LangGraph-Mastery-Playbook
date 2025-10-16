@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph chat workflow contrasts reducer pruning, invocation-time filtering, and token trimming to control how much history the model sees.
+
+What You'll Learn
 1. Compare multiple strategies for managing conversation history in LangGraph.
 2. Apply reducer-based filtering, selective invocation windows, and token-aware trimming.
 3. Print message transcripts at each stage to understand what the model actually sees.

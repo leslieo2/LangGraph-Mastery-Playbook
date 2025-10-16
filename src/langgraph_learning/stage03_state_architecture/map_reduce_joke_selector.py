@@ -1,11 +1,13 @@
-"""What You'll Learn
+"""This LangGraph map-reduce agent generates multiple jokes in parallel from a topic and synthesizes the winning punchline with structured outputs.
+
+What You'll Learn
 1. Fan out work with `Send` to parallelize LangGraph nodes against dynamic inputs.
-2. Accumulate state with list reducers and convert raw LLM text into structured models.
+2. Accumulate state with list reducers and apply `llm.with_structured_output` for structured responses.
 3. Visualize the compiled graph and stream a demo run that highlights the map and reduce phases.
 
 Lesson Flow
 1. Prepare typed state plus Pydantic helpers for subjects, jokes, and the winning punchline.
-2. Build a map-reduce graph that generates jokes per subject and collapses them into a final choice.
+2. Use `llm.with_structured_output` to power each node, then build a map-reduce graph that generates jokes per subject and collapses them into a final choice.
 3. Render the graph diagram and stream an example topic to observe each node's contribution.
 """
 
@@ -27,9 +29,7 @@ from src.langgraph_learning.utils import (
     save_graph_image,
 )
 
-SUBJECTS_PROMPT = (
-    "Generate a list of 3 sub-topics that are all related to this overall topic: {topic}."
-)
+SUBJECTS_PROMPT = "Generate a list of 3 sub-topics that are all related to this overall topic: {topic}."
 JOKE_PROMPT = "Generate a joke about {subject}."
 BEST_JOKE_PROMPT = (
     "Below are jokes about {topic}. "
@@ -73,7 +73,9 @@ def build_map_reduce_app(model: str = "gpt-5-nano"):
         return {"subjects": response.subjects}
 
     def continue_to_jokes(state: OverallState):
-        return [Send("generate_joke", {"subject": subject}) for subject in state["subjects"]]
+        return [
+            Send("generate_joke", {"subject": subject}) for subject in state["subjects"]
+        ]
 
     def generate_joke(state: JokeState):
         prompt = JOKE_PROMPT.format(subject=state["subject"])
@@ -81,13 +83,19 @@ def build_map_reduce_app(model: str = "gpt-5-nano"):
         return {"jokes": [response.joke]}
 
     def best_joke(state: OverallState):
-        jokes = "\n\n".join(f"[{idx}] {joke}" for idx, joke in enumerate(state["jokes"]))
+        jokes = "\n\n".join(
+            f"[{idx}] {joke}" for idx, joke in enumerate(state["jokes"])
+        )
         prompt = BEST_JOKE_PROMPT.format(topic=state["topic"], jokes=jokes)
         response = best_chain.invoke(prompt)
         try:
             winner = state["jokes"][response.id]
-        except IndexError as exc:  # Defensive guard if the LLM returns an invalid index.
-            raise ValueError(f"Model selected joke index {response.id}, but only {len(state['jokes'])} jokes exist.") from exc
+        except (
+            IndexError
+        ) as exc:  # Defensive guard if the LLM returns an invalid index.
+            raise ValueError(
+                f"Model selected joke index {response.id}, but only {len(state['jokes'])} jokes exist."
+            ) from exc
         return {"best_selected_joke": winner}
 
     builder = StateGraph(OverallState)
@@ -95,7 +103,9 @@ def build_map_reduce_app(model: str = "gpt-5-nano"):
     builder.add_node("generate_joke", generate_joke)
     builder.add_node("best_joke", best_joke)
     builder.add_edge(START, "generate_topics")
-    builder.add_conditional_edges("generate_topics", continue_to_jokes, ["generate_joke"])
+    builder.add_conditional_edges(
+        "generate_topics", continue_to_jokes, ["generate_joke"]
+    )
     builder.add_edge("generate_joke", "best_joke")
     builder.add_edge("best_joke", END)
     return builder.compile()

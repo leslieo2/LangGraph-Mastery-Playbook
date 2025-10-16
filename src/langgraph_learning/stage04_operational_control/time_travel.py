@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph arithmetic agent captures checkpoints, replays historical state, and forks new branches to explore alternate tool call paths.
+
+What You'll Learn
 1. Capture checkpoints during LangGraph runs and list historical states for inspection.
 2. Replay a past checkpoint without mutating state, or fork from it with updated messages.
 3. Combine `MemorySaver` with manual state updates to explore alternate execution branches.

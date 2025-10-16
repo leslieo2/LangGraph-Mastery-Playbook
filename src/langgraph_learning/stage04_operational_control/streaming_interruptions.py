@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph streaming assistant alternates between live conversation and summarization while exposing raw chunks, value snapshots, and async events.
+
+What You'll Learn
 1. Enable streaming across LangGraph, including raw chunk updates and value snapshots.
 2. Combine conversation summarization with checkpointing for long-lived streaming chats.
 3. Monitor flows through async event streams.

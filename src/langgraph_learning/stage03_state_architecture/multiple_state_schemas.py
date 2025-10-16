@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph workflow experiments with private nodes, shared state, and explicit input/output schemas to control what data each node can access.
+
+What You'll Learn
 1. Configure LangGraph nodes that operate on different schemas within the same workflow.
 2. Restrict or widen visibility by setting explicit input/output schemas on `StateGraph`.
 3. Observe how branching nodes behave when state information is partially hidden.

@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph mini-agent binds a chat model to a multiply tool and highlights how message history flows through a single-node tool-calling workflow.
+
+What You'll Learn
 1. Review how LangGraph reuses existing chat messages and how `add_messages` manages history.
 2. See how to bind a LangChain chat model to a simple Python tool for entry-level tool calling.
 3. Compile a single-node `MessagesState` graph, render its structure, and run an end-to-end LLM flow.

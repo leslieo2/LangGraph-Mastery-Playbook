@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph chatbot alternates between answering the user and rolling summaries so long conversations stay within token limits.
+
+What You'll Learn
 1. Maintain long-running conversations by summarizing older context into compact memory.
 2. Apply LangGraph reducers to trim message history while preserving salient details.
 3. Use `MemorySaver` to retain summaries across threads and inspect the stored state.

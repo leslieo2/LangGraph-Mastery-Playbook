@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph branching mini-agent introduces typed state, conditional routing, and graph visualization around a tiny mood selector.
+
+What You'll Learn
 1. Define a minimal `TypedDict` state and state transition nodes in LangGraph.
 2. Use conditional edges to control routing based on runtime decisions.
 3. Compile and visualize a simple graph before invoking it with example state.

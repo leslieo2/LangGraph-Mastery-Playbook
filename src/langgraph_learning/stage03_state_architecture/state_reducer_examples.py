@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph reducer sandbox demonstrates overwrite conflicts, custom list merging, and direct message manipulation inside compiled workflows.
+
+What You'll Learn
 1. Explore LangGraph's reducer semantics for overwriting, branching conflicts, and list appends.
 2. Implement custom reducer functions that safely merge list state with nullable inputs.
 3. Manipulate message history directly via `add_messages`, including deletion instructions.

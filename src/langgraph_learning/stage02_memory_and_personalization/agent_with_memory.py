@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph arithmetic agent keeps checkpoints between tool calls so it can reuse previous answers when the user follows up later.
+
+What You'll Learn
 1. Extend a reactive agent with checkpoints so it can remember prior turns.
 2. Configure a `MemorySaver` checkpointer to maintain conversation state across invocations.
 3. Demonstrate persistence by running sequential prompts that reference earlier results.

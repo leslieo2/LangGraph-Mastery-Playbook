@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph companion captures structured user profiles with TrustCall, personalizes model prompts, and keeps the profile up to date after each turn.
+
+What You'll Learn
 1. Capture structured user profiles using TrustCall and a Pydantic schema.
 2. Prepend stored profile details to prompts so the model can personalize replies.
 3. Update the profile after each turn and inspect the stored snapshot for verification.

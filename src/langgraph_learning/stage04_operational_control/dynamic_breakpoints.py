@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph guardrail demo interrupts mid-run when input fails a length check, then walks through inspecting, retrying, and repairing state.
+
+What You'll Learn
 1. Trigger dynamic interrupts inside LangGraph nodes using `langgraph.types.interrupt`.
 2. Inspect pending tasks, retry without changes, and update state to satisfy guards.
 

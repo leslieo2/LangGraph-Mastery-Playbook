@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph warm-up script verifies provider credentials, chats with an OpenAI model, and invokes a Tavily search tool to showcase the baseline stack.
+
+What You'll Learn
 1. Confirm the required API keys early to avoid runtime surprises.
 2. Send a first message to an OpenAI chat model using LangChain abstractions.
 3. Invoke a Tavily web search tool and inspect the raw document payload.

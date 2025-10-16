@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph agent pauses before tool execution, lets operators approve or resume runs, and mirrors the flow via the hosted LangGraph SDK.
+
+What You'll Learn
 1. Use LangGraph breakpoints to pause execution before tool nodes for manual inspection.
 2. Resume or cancel runs interactively, simulating approval workflows for tool usage.
 3. Stream events via the LangGraph SDK to observe breakpoint behavior in hosted environments.

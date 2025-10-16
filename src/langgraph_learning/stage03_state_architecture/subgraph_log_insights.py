@@ -1,12 +1,15 @@
-"""What You'll Learn
-1. Split a LangGraph workflow into sub-graphs that manage their own state schemas.
-2. Share parent state via overlapping keys while keeping sub-graph outputs isolated.
-3. Visualize the nested structure with xray graphs and run a deterministic demo.
+"""
+This LangGraph agent ingests raw support chat logs, routes them through specialized sub-graphs, and returns coordinated summaries that spotlight systemic failures alongside trending customer questions.
+
+What You'll Learn
+1. Split a LangGraph workflow into sub-graphs that manage their own state schemas, so each team can evolve independently without breaking shared contracts.
+2. Share parent state via overlapping keys while keeping sub-graph outputs isolated, demonstrating how selective inheritance prevents accidental cross-talk.
+3. Visualize the nested structure with xray graphs and run a deterministic demo that proves the summaries align with the designed data flow.
 
 Lesson Flow
-1. Define typed schemas for raw logs plus the two specialized sub-graphs.
-2. Compile failure analysis and question summarization sub-graphs that publish targeted output.
-3. Nest the compiled graphs inside a parent pipeline, render its diagram, and invoke it on sample logs.
+1. Define typed schemas for raw logs plus the two specialized sub-graphs, clarifying which fields are private versus promoted back to the parent.
+2. Compile failure analysis and question summarization sub-graphs that publish targeted output, wiring their intermediate nodes to mimic production review steps.
+3. Nest the compiled graphs inside a parent pipeline, render its diagram, and invoke it on sample logs to compare failure and question insights side by side.
 """
 
 from __future__ import annotations
@@ -22,6 +25,8 @@ from src.langgraph_learning.utils import save_graph_image
 
 
 class Log(TypedDict):
+    """Raw conversation log as captured from the platform."""
+
     id: str
     question: str
     docs: list[str] | None
@@ -32,6 +37,8 @@ class Log(TypedDict):
 
 
 class FailureAnalysisState(TypedDict):
+    """State schema for nodes that prepare and summarize failures."""
+
     cleaned_logs: list[Log]
     failures: list[Log]
     fa_summary: str
@@ -39,11 +46,15 @@ class FailureAnalysisState(TypedDict):
 
 
 class FailureAnalysisOutputState(TypedDict):
+    """Subset of failure analysis fields exposed to the parent graph."""
+
     fa_summary: str
     processed_logs: list[str]
 
 
 class QuestionSummarizationState(TypedDict):
+    """State schema for nodes that aggregate user question topics."""
+
     cleaned_logs: list[Log]
     qs_summary: str
     report: str
@@ -51,12 +62,16 @@ class QuestionSummarizationState(TypedDict):
 
 
 class QuestionSummarizationOutputState(TypedDict):
+    """Question summarization fields returned to the parent graph."""
+
     qs_summary: str
     report: str
     processed_logs: list[str]
 
 
 class EntryGraphState(TypedDict):
+    """Shared state flowing through the parent graph and sub-graphs."""
+
     raw_logs: list[Log]
     cleaned_logs: list[Log]
     fa_summary: str
@@ -82,7 +97,9 @@ def build_failure_analysis_subgraph():
     """Compile the failure-analysis sub-graph."""
 
     def get_failures(state: FailureAnalysisState):
-        failures = [log for log in state["cleaned_logs"] if log.get("grade") is not None]
+        failures = [
+            log for log in state["cleaned_logs"] if log.get("grade") is not None
+        ]
         return {"failures": failures}
 
     def generate_summary(state: FailureAnalysisState):

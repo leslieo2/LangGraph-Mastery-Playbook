@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph agent loops between an assistant LLM and arithmetic tools to execute multi-step math requests with reactive routing.
+
+What You'll Learn
 1. Build a reactive agent loop that alternates between an assistant LLM node and tool execution.
 2. Bind multiple arithmetic tools to a chat model and let LangGraph route tool calls automatically.
 3. Persist graph diagrams and run a sample request end-to-end with pretty-printed messages.

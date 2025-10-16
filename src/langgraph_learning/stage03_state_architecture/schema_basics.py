@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph schema lab runs the same branching workflow across `TypedDict`, dataclass, and Pydantic states to compare validation behavior.
+
+What You'll Learn
 1. Compare different state schema strategies: `TypedDict`, dataclass, and Pydantic models.
 2. See how LangGraph validates input and output when you swap schema types.
 3. Understand validation failures by intentionally triggering Pydantic errors.

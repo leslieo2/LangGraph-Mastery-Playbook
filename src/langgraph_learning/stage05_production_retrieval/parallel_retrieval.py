@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph retrieval agent queries Tavily and Wikipedia in parallel, fuses the evidence, and prompts an LLM to synthesize an answer.
+
+What You'll Learn
 1. Orchestrate parallel retrieval pipelines (Tavily + Wikipedia) inside a single LangGraph app.
 2. Merge heterogeneous context sources and feed the combined evidence into an LLM for synthesis.
 3. Validate environment prerequisites and capture graph diagrams for production documentation.

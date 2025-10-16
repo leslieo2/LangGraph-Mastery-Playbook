@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph routing agent detects tool calls from the LLM, executes a multiply tool, and returns the augmented conversation transcript.
+
+What You'll Learn
 1. Configure a LangGraph workflow that detects tool calls and routes control to a tool node.
 2. Bind a simple multiply tool to `ChatOpenAI` and observe automatic tool invocation.
 3. Save graph visuals and run a demo request to inspect the routed response.

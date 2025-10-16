@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph memory service extracts structured facts with TrustCall, stores them as a searchable collection, and replays them during conversation.
+
+What You'll Learn
 1. Model user memories as Pydantic schemas and store them as a searchable collection.
 2. Invoke TrustCall to insert or update memories in parallel with structured outputs.
 3. Compile a LangGraph that reads existing memories, updates them, and logs the results.

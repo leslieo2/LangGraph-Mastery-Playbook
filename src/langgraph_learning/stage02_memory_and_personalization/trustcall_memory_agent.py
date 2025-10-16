@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph multi-memory agent routes user requests through TrustCall extractors to update profiles, todos, and instructions in parallel.
+
+What You'll Learn
 1. Coordinate multiple memory types (profile, todos, instructions) inside one LangGraph agent.
 2. Use TrustCall extractors to insert or patch structured documents based on conversation turns.
 3. Route tool decisions dynamically and summarize TrustCall changes for transparent logging.

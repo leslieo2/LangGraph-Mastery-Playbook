@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph chatbot writes conversations and rolling summaries to SQLite so each session can pick up where the last one ended.
+
+What You'll Learn
 1. Persist LangGraph conversation state to SQLite for durable, cross-session memory.
 2. Combine summaries with long-term storage so the assistant can recall prior threads.
 3. Exercise the workflow with multiple conversation rounds and inspect saved records.

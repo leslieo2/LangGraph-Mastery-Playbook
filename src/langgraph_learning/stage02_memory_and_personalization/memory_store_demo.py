@@ -1,4 +1,6 @@
-"""What You'll Learn
+"""This LangGraph memory agent reflects on each turn, writes bullet-point memories to an in-memory store, and personalizes future replies with the stored notes.
+
+What You'll Learn
 1. Personalize responses by reading and writing user memory within a LangGraph workflow.
 2. Reflect on recent conversation turns to synthesize structured memory snippets.
 3. Demonstrate how thread-specific configuration drives both retrieval and storage.
