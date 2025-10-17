@@ -45,7 +45,7 @@ The lesson also saves a graph diagram you can reference or share:
 | `stage02_memory_basics` → `agent_with_short_term_memory` | Add conversation memory backed by checkpoints and persistence. | Configure `MemorySaver`, reuse prior turns, and checkpoint graph state between runs. | ~60 min |
 | `stage03_state_management` → `agent_with_parallel_nodes` | Fan out work with map-reduce and structured outputs. | Design typed state, parallelize nodes with `Send`, and synthesize results. | ~75 min |
 | `stage04_operational_control` → `agent_with_interruption` | Debug and steer long-running graphs in real time. | Use breakpoints, streaming modes, history trimming, and trust-call inspection. | ~60 min |
-| `stage05_advanced_memory_systems` → `trustcall_memory_agent` | Coordinate multiple memory types with structured extraction. | Manage user profiles, todos, and instructions with TrustCall extractors. | ~75 min |
+| `stage05_advanced_memory_systems` → `agent_with_multi_memory_coordination` | Coordinate multiple memory types with structured extraction. | Manage user profiles, todos, and instructions with TrustCall extractors. | ~75 min |
 | `stage06_production_systems` → `agent_with_deep_research` | Ship production-ready retrieval and synthesis workflows. | Blend parallel retrievers, merge context chunks, and add production guardrails. | ~90 min |
 
 Every Python file begins with a “What You'll Learn / Lesson Flow” docstring so you can skim the topic before running it.
@@ -104,7 +104,7 @@ python -m src.langgraph_learning.stage02_memory_basics.agent_with_short_term_mem
 python -m src.langgraph_learning.stage04_operational_control.agent_with_interruption
 
 # Stage 05 advanced memory systems
-python -m src.langgraph_learning.stage05_advanced_memory_systems.trustcall_memory_agent
+python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_multi_memory_coordination
 
 # Stage 06 production systems
 python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research
