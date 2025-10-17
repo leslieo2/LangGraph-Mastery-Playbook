@@ -34,7 +34,7 @@ if __package__ in {None, ""}:
     if project_root not in sys.path:
         sys.path.append(project_root)
 
-from src.langgraph_learning.stage02_memory_management.configuration import (
+from src.langgraph_learning.stage05_advanced_memory_systems.configuration import (
     MemoryConfiguration,
 )
 from src.langgraph_learning.utils import (

@@ -10,7 +10,7 @@
 
 ## TL;DR
 
-- 按照五个阶段循序渐进，从图基础一路练到生产级检索与综合。
+- 按照六个阶段循序渐进，从图基础一路练到生产级检索与综合。
 - 每一堂课都是带 `main()` 的纯 Python 模块，附带图谱、检查点和流式日志等产物。
 - 借助 `utils.create_llm` 统一管理 OpenAI、OpenRouter、DeepSeek 等兼容服务。
 - 面向偏爱脚本的构建者——适合演示、CI 集成或团队入门培训。
@@ -20,7 +20,7 @@
 试试 Stage 03 的 Map-Reduce 课程，感受 LangGraph 的并行处理和结构化输出：
 
 ```bash
-uv run python -m src.langgraph_learning.stage05_production_retrieval.agent_with_deep_research
+uv run python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_deep_research
 ```
 
 示例输出：
@@ -29,14 +29,14 @@ uv run python -m src.langgraph_learning.stage05_production_retrieval.agent_with_
 
 课程还会在 `artifacts/` 目录生成可复用的图谱：
 
-<img src="src/langgraph_learning/stage05_production_retrieval/artifacts/agent_with_deep_research.png" alt="Research Agent Graph" width="50%">
+<img src="src/langgraph_learning/stage06_production_systems/artifacts/agent_with_deep_research.png" alt="Research Agent Graph" width="50%">
 
 ## 项目亮点
 
 一个开源、以代码为先的 LangGraph 自学课程。我们摒弃松散的 Notebook 片段，将每堂课都整理成可直接运行的 Python 脚本，配有明确的学习目标、清晰的课程流程说明，以及统一维护的工具库。由此得到的学习路径可复现、易于测试，既适合快速上手，也能扩展到生产级的编排实践。
 
 - **脚本优先的教程。** 大多数 LangGraph 示例都放在 Jupyter Notebook 里——读起来方便，复用起来麻烦。本项目的每个示例都是带 `main()` 入口的独立 Python 模块，并按阶段提供专属辅助工具。
-- **有结构的学习路线。** 课程分为编号的阶段，从 Stage 01 基础图技能到 Stage 05 生产级检索与综合，每一步都知道接下来该学什么。
+- **有结构的学习路线。** 课程分为编号的阶段，从 Stage 01 基础图技能到 Stage 06 生产级检索与综合，每一步都知道接下来该学什么。
 - **一致的工具体系。** 共享工具负责图形可视化、环境检查、TrustCall 分析，以及常用的数学工具。减少样板代码，把时间留给核心概念。
 - **便于自动化。** 全部基于纯 Python，你可以无界面运行整套课程，集成到 CI 流水线，或扩展成自己的测试。
 
@@ -45,10 +45,11 @@ uv run python -m src.langgraph_learning.stage05_production_retrieval.agent_with_
 | Stage | 焦点 & 代表课程 | 核心收获 | 预计用时 |
 | --- | --- | --- | --- |
 | `stage01_foundations` → `quickstart` | 构建会聊天并调用 Tavily 搜索工具的首个 LangGraph agent。 | 提前验证凭证、调用聊天模型、集成第三方工具。 | ~45 分钟 |
-| `stage02_memory_and_personalization` → `agent_with_short_term_memory` | 为对话代理加入带持久化的检查点记忆。 | 配置 `MemorySaver`、续写历史对话、在运行间保存图状态。 | ~60 分钟 |
+| `stage02_memory_basics` → `agent_with_short_term_memory` | 为对话代理加入带持久化的检查点记忆。 | 配置 `MemorySaver`、续写历史对话、在运行间保存图状态。 | ~60 分钟 |
 | `stage03_state_management` → `agent_with_parallel_nodes` | 使用 Map-Reduce 并行生成并结构化整理答案。 | 设计类型化状态、借助 `Send` 并行节点、综合多路输出。 | ~75 分钟 |
-| `stage04_interruption_and_human_in_the_loop` → `breakpoints` | 实时调试并掌控长流程图。 | 运用断点、流式模式、历史裁剪与 TrustCall 检视。 | ~60 分钟 |
-| `stage05_production_retrieval` → `parallel_retrieval` | 交付生产级检索与综合工作流。 | 并联检索器、合并上下文片段、添加上线防护。 | ~90 分钟 |
+| `stage04_operational_control` → `agent_with_interruption` | 实时调试并掌控长流程图。 | 运用断点、流式模式、历史裁剪与 TrustCall 检视。 | ~60 分钟 |
+| `stage05_advanced_memory_systems` → `trustcall_memory_agent` | 协调多类型记忆系统与结构化提取。 | 管理用户档案、待办事项和指令，使用 TrustCall 提取器。 | ~75 分钟 |
+| `stage06_production_systems` → `agent_with_deep_research` | 交付生产级检索与综合工作流。 | 并联检索器、合并上下文片段、添加上线防护。 | ~90 分钟 |
 
 每个 Python 文件开头都有 “What You'll Learn / Lesson Flow” 的文档字符串，运行前即可快速了解内容。
 
@@ -72,7 +73,7 @@ uv pip install .
 
 ```bash
 export OPENAI_API_KEY="sk-..."        # 所有 LLM 演示都需要
-export TAVILY_API_KEY="tvly-..."      # Stage 05 并行检索示例需要
+export TAVILY_API_KEY="tvly-..."      # Stage 06 生产系统示例需要
 export LANGSMITH_API_KEY="ls-..."     # 可选，启用支持课程的链路追踪
 ```
 
@@ -98,13 +99,17 @@ OPENROUTER_TEMPERATURE=0.2
 python -m src.langgraph_learning.stage01_foundations.quickstart
 python -m src.langgraph_learning.stage01_foundations.agent_with_tool_call
 
-# Stage 02 记忆系统
-python -m src.langgraph_learning.stage02_memory_management.agent_with_short_term_memory
-python -m src.langgraph_learning.stage02_memory_management.agent_with_long_term_memory
-python -m src.langgraph_learning.stage02_memory_management.trustcall_memory_agent
+# Stage 02 记忆基础
+python -m src.langgraph_learning.stage02_memory_basics.agent_with_short_term_memory
 
-# Stage 04 调试与监控
-python -m src.langgraph_learning.stage04_interruption_and_human_in_the_loop.breakpoints
+# Stage 04 操作控制
+python -m src.langgraph_learning.stage04_operational_control.agent_with_interruption
+
+# Stage 05 高级记忆系统
+python -m src.langgraph_learning.stage05_advanced_memory_systems.trustcall_memory_agent
+
+# Stage 06 生产系统
+python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research
 ```
 
 多数课程会在对应模块的 `artifacts/` 目录下生成图形化的 PNG；流式课程会输出增量信息；调试课程可能会提示手动确认。
