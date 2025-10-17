@@ -68,36 +68,54 @@ Only include details directly stated by the user, keeping each field concise."""
 
 
 def _format_profile(profile: dict[str, object] | None) -> str:
+    """Format profile data for display in system prompts.
+
+    Args:
+        profile: User profile data as dict or None if no profile exists
+
+    Returns:
+        Formatted string representation of the profile
+    """
     if not profile:
         return "No profile stored yet."
+
     if isinstance(profile, BaseModel):
         profile = profile.model_dump(mode="json")
+
     name = profile.get("name") or "Unknown"
     location = profile.get("location") or "Unknown"
     job = profile.get("job") or "Unknown"
     interests = ", ".join(profile.get("interests") or []) or "None listed"
+
     return f"Name: {name}\nLocation: {location}\nJob: {job}\nInterests: {interests}"
 
 
-def build_profile_graph(model: ChatOpenAI | None = None):
-    """Compile a graph that maintains a structured user profile."""
-    llm = model or create_llm()
-    extractor = create_extractor(
-        llm,
-        tools=[Profile],
-        tool_choice="Profile",
-    )
+def _create_config_helper(config: RunnableConfig) -> MemoryConfiguration:
+    """Helper function to create MemoryConfiguration from RunnableConfig."""
+    return MemoryConfiguration.from_runnable_config(config)
 
-    def _config(config: RunnableConfig) -> MemoryConfiguration:
-        return MemoryConfiguration.from_runnable_config(config)
+
+def _create_call_model_node(llm: ChatOpenAI):
+    """Create the call model node for processing user messages."""
 
     def call_model(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        cfg = _config(config)
+        """Process user message with personalized system prompt.
+
+        Args:
+            state: Current conversation state
+            config: Runnable configuration
+            store: Memory store for profile data
+
+        Returns:
+            Updated state with model response
+        """
+        cfg = _create_config_helper(config)
         namespace = ("profile", cfg.user_id)
         existing = store.get(namespace, "user_profile")
         stored_profile = None
         if existing:
             stored_profile = existing.value.get("profile")  # type: ignore[assignment]
+
         formatted_profile = _format_profile(stored_profile)
         response = llm.invoke(
             [
@@ -109,31 +127,90 @@ def build_profile_graph(model: ChatOpenAI | None = None):
         )
         return {"messages": response}
 
+    return call_model
+
+
+def _prepare_existing_profile(existing: object | None) -> tuple[str, list | None]:
+    """Prepare existing profile data for TrustCall extractor.
+
+    Args:
+        existing: Existing profile data from store
+
+    Returns:
+        Tuple of (doc_id, existing_payload) for TrustCall
+    """
+    existing_doc_id = "user_profile"
+    existing_payload = None
+
+    if existing:
+        existing_doc_id = existing.value.get("doc_id", existing_doc_id)
+        profile_payload = existing.value.get("profile") or {}
+
+        if isinstance(profile_payload, BaseModel):
+            profile_payload = profile_payload.model_dump(mode="json")
+        elif not isinstance(profile_payload, dict):
+            try:
+                profile_payload = Profile.model_validate(profile_payload).model_dump(
+                    mode="json"
+                )
+            except ValidationError:
+                profile_payload = {}
+
+        existing_payload = [
+            (
+                existing_doc_id,
+                "Profile",
+                profile_payload,
+            )
+        ]
+
+    return existing_doc_id, existing_payload
+
+
+def _process_profile_response(profile_response: object) -> dict | None:
+    """Process TrustCall response to extract profile data.
+
+    Args:
+        profile_response: Response from TrustCall extractor
+
+    Returns:
+        Processed profile data as dict, or None if invalid
+    """
+    if isinstance(profile_response, BaseModel):
+        return profile_response.model_dump(mode="json")
+    elif isinstance(profile_response, dict):
+        return profile_response
+    else:
+        try:
+            return Profile.model_validate(profile_response).model_dump(mode="json")
+        except ValidationError:
+            return None
+
+
+def _create_write_memory_node(llm: ChatOpenAI):
+    """Create the write memory node for updating user profiles."""
+    extractor = create_extractor(
+        llm,
+        tools=[Profile],
+        tool_choice="Profile",
+    )
+
     def write_memory(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        cfg = _config(config)
+        """Update user profile using TrustCall extractor.
+
+        Args:
+            state: Current conversation state
+            config: Runnable configuration
+            store: Memory store for profile data
+        """
+        cfg = _create_config_helper(config)
         namespace = ("profile", cfg.user_id)
         existing = store.get(namespace, "user_profile")
-        existing_payload = None
-        existing_doc_id = "user_profile"
-        if existing:
-            existing_doc_id = existing.value.get("doc_id", existing_doc_id)
-            profile_payload = existing.value.get("profile") or {}
-            if isinstance(profile_payload, BaseModel):
-                profile_payload = profile_payload.model_dump(mode="json")
-            elif not isinstance(profile_payload, dict):
-                try:
-                    profile_payload = Profile.model_validate(
-                        profile_payload
-                    ).model_dump(mode="json")
-                except ValidationError:
-                    profile_payload = {}
-            existing_payload = [
-                (
-                    existing_doc_id,
-                    "Profile",
-                    profile_payload,
-                )
-            ]
+
+        # Prepare existing profile data for TrustCall
+        existing_doc_id, existing_payload = _prepare_existing_profile(existing)
+
+        # Invoke TrustCall extractor to update profile
         result = extractor.invoke(
             {
                 "messages": [
@@ -143,21 +220,18 @@ def build_profile_graph(model: ChatOpenAI | None = None):
                 "existing": existing_payload,
             }
         )
+
+        # Process extractor response
         responses = result.get("responses") or []
         if not responses:
             return
+
         profile_response = responses[0]
-        if isinstance(profile_response, BaseModel):
-            updated_profile = profile_response.model_dump(mode="json")
-        elif isinstance(profile_response, dict):
-            updated_profile = profile_response
-        else:
-            try:
-                updated_profile = Profile.model_validate(profile_response).model_dump(
-                    mode="json"
-                )
-            except ValidationError:
-                return
+        updated_profile = _process_profile_response(profile_response)
+        if not updated_profile:
+            return
+
+        # Store updated profile
         metadata = result.get("response_metadata") or [{}]
         doc_id = metadata[0].get("json_doc_id") or existing_doc_id
         store.put(
@@ -169,6 +243,28 @@ def build_profile_graph(model: ChatOpenAI | None = None):
             },
         )
 
+    return write_memory
+
+
+def build_profile_graph(model: ChatOpenAI | None = None):
+    """Compile a graph that maintains a structured user profile.
+
+    This graph captures structured user profiles with TrustCall, personalizes
+    model prompts, and keeps the profile up to date after each turn.
+
+    Args:
+        model: Optional ChatOpenAI model instance. If None, creates default LLM.
+
+    Returns:
+        Compiled LangGraph with profile memory capabilities
+    """
+    llm = model or create_llm()
+
+    # Create node functions
+    call_model = _create_call_model_node(llm)
+    write_memory = _create_write_memory_node(llm)
+
+    # Build the graph
     builder = StateGraph(MessagesState, context_schema=MemoryConfiguration)
     builder.add_node("assistant", call_model)
     builder.add_node("update_profile", write_memory)

@@ -134,46 +134,63 @@ Current instructions:
 """
 
 
-def build_trustcall_agent(model: ChatOpenAI | None = None):
-    """Compile a multi-memory LangGraph agent powered by TrustCall."""
-    llm = model or create_llm()
-    profile_extractor = create_extractor(
-        llm, tools=[Profile], tool_choice="Profile", enable_inserts=True
-    )
+def _create_config_helper(config: RunnableConfig) -> MemoryConfiguration:
+    """Helper function to create MemoryConfiguration from RunnableConfig."""
+    return MemoryConfiguration.from_runnable_config(config)
 
-    def _cfg(config: RunnableConfig) -> MemoryConfiguration:
-        return MemoryConfiguration.from_runnable_config(config)
 
-    def _load_profile(store: BaseStore, user_id: str) -> dict | None:
-        existing = store.search(("profile", user_id))
-        return existing[0].value if existing else None
+def _load_user_profile(store: BaseStore, user_id: str) -> dict | None:
+    """Load user profile from memory store."""
+    existing = store.search(("profile", user_id))
+    return existing[0].value if existing else None
 
-    def _load_todos(store: BaseStore, user_id: str) -> list[dict]:
-        return [memory.value for memory in store.search(("todo", user_id))]
 
-    def _load_instructions(store: BaseStore, user_id: str) -> str:
-        existing = store.get(("instructions", user_id), "user_instructions")
-        return existing.value.get("memory", "") if existing else ""
+def _load_user_todos(store: BaseStore, user_id: str) -> list[dict]:
+    """Load user todos from memory store."""
+    return [memory.value for memory in store.search(("todo", user_id))]
+
+
+def _load_user_instructions(store: BaseStore, user_id: str) -> str:
+    """Load user instructions from memory store."""
+    existing = store.get(("instructions", user_id), "user_instructions")
+    return existing.value.get("memory", "") if existing else ""
+
+
+def _create_task_maistro_node(llm: ChatOpenAI):
+    """Create the task maistro node for processing user requests."""
 
     def task_maistro(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        cfg = _cfg(config)
-        profile = _load_profile(store, cfg.user_id) or {}
-        todos = _load_todos(store, cfg.user_id)
-        instructions = _load_instructions(store, cfg.user_id)
+        """Process user request and decide which memory to update."""
+        cfg = _create_config_helper(config)
+        profile = _load_user_profile(store, cfg.user_id) or {}
+        todos = _load_user_todos(store, cfg.user_id)
+        instructions = _load_user_instructions(store, cfg.user_id)
+
         todo_text = "\n".join(map(str, todos)) or "No tasks saved."
         system_msg = SYSTEM_PROMPT.format(
             user_profile=profile or "No profile stored.",
             todo=todo_text,
             instructions=instructions or "No custom instructions.",
         )
+
         tool_llm = llm.bind_tools([UpdateMemory], parallel_tool_calls=False)
         response = tool_llm.invoke(
             [SystemMessage(content=system_msg), *state["messages"]]
         )
         return {"messages": [response]}
 
+    return task_maistro
+
+
+def _create_profile_updater(llm: ChatOpenAI):
+    """Create profile update node with TrustCall extractor."""
+    profile_extractor = create_extractor(
+        llm, tools=[Profile], tool_choice="Profile", enable_inserts=True
+    )
+
     def update_profile(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        cfg = _cfg(config)
+        """Update user profile using TrustCall extractor."""
+        cfg = _create_config_helper(config)
         namespace = ("profile", cfg.user_id)
         existing = store.search(namespace)
         existing_docs = (
@@ -181,6 +198,7 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
             if existing
             else None
         )
+
         formatted_instruction = TRUSTCALL_INSTRUCTION.format(
             time=datetime.now().isoformat()
         )
@@ -189,12 +207,15 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
                 [SystemMessage(content=formatted_instruction), *state["messages"][:-1]]
             )
         )
+
         result = profile_extractor.invoke(
             {"messages": messages, "existing": existing_docs}
         )
+
         for response, meta in zip(result["responses"], result["response_metadata"]):
             key = meta.get("json_doc_id") or str(uuid.uuid4())
             store.put(namespace, key, response.model_dump(mode="json"))
+
         tool_call_id = state["messages"][-1].tool_calls[0]["id"]
         return {
             "messages": [
@@ -206,13 +227,21 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
             ]
         }
 
+    return update_profile
+
+
+def _create_todos_updater(llm: ChatOpenAI):
+    """Create todos update node with TrustCall extractor and tool call monitoring."""
+
     def update_todos(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        cfg = _cfg(config)
+        """Update user todos using TrustCall extractor with monitoring."""
+        cfg = _create_config_helper(config)
         namespace = ("todo", cfg.user_id)
         existing = store.search(namespace)
         existing_docs = (
             [(item.key, "ToDo", item.value) for item in existing] if existing else None
         )
+
         formatted_instruction = TRUSTCALL_INSTRUCTION.format(
             time=datetime.now().isoformat()
         )
@@ -221,6 +250,7 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
                 [SystemMessage(content=formatted_instruction), *state["messages"][:-1]]
             )
         )
+
         spy = ToolCallSpy()
         todo_extractor = create_extractor(
             llm,
@@ -228,12 +258,15 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
             tool_choice="ToDo",
             enable_inserts=True,
         ).with_listeners(on_end=spy)
+
         result = todo_extractor.invoke(
             {"messages": messages, "existing": existing_docs}
         )
+
         for response, meta in zip(result["responses"], result["response_metadata"]):
             key = meta.get("json_doc_id") or str(uuid.uuid4())
             store.put(namespace, key, response.model_dump(mode="json"))
+
         summary = summarize_tool_calls(spy.called_tools, schema_name="ToDo")
         tool_call_id = state["messages"][-1].tool_calls[0]["id"]
         return {
@@ -242,15 +275,24 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
             ]
         }
 
+    return update_todos
+
+
+def _create_instructions_updater(llm: ChatOpenAI):
+    """Create instructions update node."""
+
     def update_instructions(
         state: MessagesState, config: RunnableConfig, store: BaseStore
     ):
-        cfg = _cfg(config)
+        """Update user instructions based on conversation context."""
+        cfg = _create_config_helper(config)
         namespace = ("instructions", cfg.user_id)
         existing = store.get(namespace, "user_instructions")
+
         prompt = CREATE_INSTRUCTIONS_PROMPT.format(
             current_instructions=existing.value.get("memory") if existing else ""
         )
+
         update_request = [
             SystemMessage(content=prompt),
             *state["messages"][:-1],
@@ -258,8 +300,10 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
                 content="Please update the instructions based on the conversation."
             ),
         ]
+
         reflection = llm.invoke(update_request)
         store.put(namespace, "user_instructions", {"memory": reflection.content})
+
         tool_call_id = state["messages"][-1].tool_calls[0]["id"]
         return {
             "messages": [
@@ -271,12 +315,20 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
             ]
         }
 
+    return update_instructions
+
+
+def _create_router():
+    """Create message routing function for conditional edges."""
+
     def route_message(
         state: MessagesState, config: RunnableConfig, store: BaseStore
     ) -> Literal[END, "update_profile", "update_todos", "update_instructions"]:
+        """Route messages to appropriate update nodes based on tool calls."""
         message = state["messages"][-1]
         if not getattr(message, "tool_calls", None):
             return END
+
         update_type = message.tool_calls[0]["args"]["update_type"]
         if update_type == "user":
             return "update_profile"
@@ -286,6 +338,32 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
             return "update_instructions"
         return END
 
+    return route_message
+
+
+def build_trustcall_agent(model: ChatOpenAI | None = None):
+    """Compile a multi-memory LangGraph agent powered by TrustCall.
+
+    This agent coordinates multiple memory types (profile, todos, instructions)
+    using TrustCall extractors to insert or patch structured documents based on
+    conversation turns.
+
+    Args:
+        model: Optional ChatOpenAI model instance. If None, creates default LLM.
+
+    Returns:
+        Compiled LangGraph agent with memory management capabilities.
+    """
+    llm = model or create_llm()
+
+    # Create all node functions
+    task_maistro = _create_task_maistro_node(llm)
+    update_profile = _create_profile_updater(llm)
+    update_todos = _create_todos_updater(llm)
+    update_instructions = _create_instructions_updater(llm)
+    route_message = _create_router()
+
+    # Build the graph
     builder = StateGraph(MessagesState, config_schema=MemoryConfiguration)
     builder.add_node("task_maistro", task_maistro)
     builder.add_node("update_profile", update_profile)

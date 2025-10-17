@@ -104,7 +104,9 @@ def build_memory_graph(model: ChatOpenAI | None = None):
     checkpointer = MemorySaver()
 
     graph = builder.compile(store=long_term_memory, checkpointer=checkpointer)
-    save_graph_image(graph, filename="artifacts/long_term_memory_personalization_demo.png", xray=True)
+    save_graph_image(
+        graph, filename="artifacts/long_term_memory_personalization_demo.png", xray=True
+    )
     return graph
 
 

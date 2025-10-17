@@ -61,10 +61,26 @@ _PROVIDER_SETTINGS: dict[str, dict[str, Any]] = {
 
 
 def _from_env(var_name: str | None) -> str | None:
+    """Get environment variable value if variable name is provided.
+
+    Args:
+        var_name: Environment variable name to retrieve
+
+    Returns:
+        Environment variable value or None if not set or var_name is None
+    """
     return os.getenv(var_name) if var_name else None
 
 
 def _coerce_float(value: str | None) -> float | None:
+    """Convert string value to float, returning None on failure.
+
+    Args:
+        value: String value to convert to float
+
+    Returns:
+        Float value or None if conversion fails
+    """
     if value is None:
         return None
     try:
@@ -80,6 +96,22 @@ def _resolve_value(
     *,
     transform: Callable[[str], Any] | None = None,
 ) -> Any:
+    """Resolve a configuration value using priority order.
+
+    Priority order:
+    1. Explicit value passed to function
+    2. Environment variable value
+    3. Default value
+
+    Args:
+        explicit: Explicitly provided value (highest priority)
+        env_var: Environment variable name to check
+        default: Default value to use if no other sources provide a value
+        transform: Optional transformation function for environment values
+
+    Returns:
+        Resolved configuration value
+    """
     if explicit is not None:
         return explicit
 
@@ -95,6 +127,11 @@ def _resolve_value(
 
 
 def _default_provider() -> str:
+    """Determine the default LLM provider from configuration.
+
+    Returns:
+        Name of the default provider, or first configured provider if none marked default
+    """
     for name, settings in _PROVIDER_SETTINGS.items():
         if settings.get("is_default"):
             return name
@@ -111,7 +148,28 @@ def create_llm(
     base_url: str | None = None,
     **overrides: Any,
 ) -> ChatOpenAI:
-    """Return a ChatOpenAI instance using shared defaults and provider-specific config."""
+    """Return a ChatOpenAI instance using shared defaults and provider-specific config.
+
+    This function creates a ChatOpenAI client configured for the specified provider.
+    It resolves configuration using the following priority order:
+    1. Explicit function arguments
+    2. Environment variables
+    3. Provider defaults
+
+    Args:
+        provider: LLM provider name (openai, openrouter, deepseek)
+        model: Model name to use
+        temperature: Temperature parameter for generation
+        api_key: API key for the provider
+        base_url: Base URL for the API endpoint
+        **overrides: Additional parameters to pass to ChatOpenAI
+
+    Returns:
+        Configured ChatOpenAI instance
+
+    Raises:
+        ValueError: If provider is unsupported or required model is not configured
+    """
     provider_name = (
         provider or os.getenv("LLM_PROVIDER") or _default_provider()
     ).lower()
@@ -128,6 +186,7 @@ def create_llm(
     env_names = settings["env"]
     defaults = settings["defaults"]
 
+    # Resolve configuration values
     resolved_model = _resolve_value(
         model,
         env_names.get("model"),
@@ -138,12 +197,16 @@ def create_llm(
             f"No default model configured for provider '{provider_name}'. "
             "Specify a model explicitly when calling create_llm."
         )
-    resolved_temperature = _resolve_value(
-        temperature,
-        env_names.get("temperature"),
-        defaults.get("temperature", 0.0),
-        transform=_coerce_float,
-    ) or 0.0
+
+    resolved_temperature = (
+        _resolve_value(
+            temperature,
+            env_names.get("temperature"),
+            defaults.get("temperature", 0.0),
+            transform=_coerce_float,
+        )
+        or 0.0
+    )
 
     resolved_api_key = _resolve_value(
         api_key,
@@ -156,6 +219,7 @@ def create_llm(
         defaults.get("base_url"),
     )
 
+    # Build configuration dictionary
     config: dict[str, Any] = {
         "model": resolved_model,
         "temperature": resolved_temperature,
@@ -171,7 +235,18 @@ def create_llm(
 
 
 def require_llm_provider_api_key(provider: str | None = None) -> None:
-    """Ensure the active LLM provider has credentials configured."""
+    """Ensure the active LLM provider has credentials configured.
+
+    This function checks that the specified provider has a valid API key
+    configured either through environment variables or default settings.
+
+    Args:
+        provider: LLM provider name to check (uses default if None)
+
+    Raises:
+        ValueError: If provider is unsupported
+        RuntimeError: If no API key is configured for the provider
+    """
     provider_name = (
         provider or os.getenv("LLM_PROVIDER") or _default_provider()
     ).lower()
@@ -188,9 +263,11 @@ def require_llm_provider_api_key(provider: str | None = None) -> None:
     api_key_env = env_names.get("api_key")
     default_api_key = defaults.get("api_key")
 
+    # Check if API key is available through defaults
     if default_api_key:
         return
 
+    # Check if API key is available through environment variable
     if api_key_env and os.getenv(api_key_env):
         return
 

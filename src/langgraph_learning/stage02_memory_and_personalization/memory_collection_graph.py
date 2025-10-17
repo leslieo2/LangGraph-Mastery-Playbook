@@ -64,9 +64,44 @@ Use the Memory tool to retain any useful details about the user.
 Insert brand new memories or update existing ones as needed."""
 
 
-def build_memory_collection_graph(model: ChatOpenAI | None = None):
-    """Compile a graph that stores multiple user memories via TrustCall."""
-    llm = model or create_llm()
+def _create_config_helper(config: RunnableConfig) -> MemoryConfiguration:
+    """Helper function to create MemoryConfiguration from RunnableConfig."""
+    return MemoryConfiguration.from_runnable_config(config)
+
+
+def _create_call_model_node(llm: ChatOpenAI):
+    """Create the call model node for processing user messages with memory context."""
+
+    def call_model(state: MessagesState, config: RunnableConfig, store: BaseStore):
+        """Process user message with memory context from stored facts.
+
+        Args:
+            state: Current conversation state
+            config: Runnable configuration
+            store: Memory store for user facts
+
+        Returns:
+            Updated state with model response
+        """
+        cfg = _create_config_helper(config)
+        namespace = ("memories", cfg.user_id)
+        memories = list(store.search(namespace))
+
+        # Format stored memories for system prompt
+        formatted = (
+            "\n".join(f"- {item.value['content']}" for item in memories)
+            or "No saved memories."
+        )
+
+        system_msg = MODEL_SYSTEM_MESSAGE.format(memory=formatted)
+        response = llm.invoke([SystemMessage(content=system_msg), *state["messages"]])
+        return {"messages": response}
+
+    return call_model
+
+
+def _create_write_memory_node(llm: ChatOpenAI):
+    """Create the write memory node for updating user memories with TrustCall."""
     extractor = create_extractor(
         llm,
         tools=[Memory],
@@ -74,40 +109,59 @@ def build_memory_collection_graph(model: ChatOpenAI | None = None):
         enable_inserts=True,
     )
 
-    def _config(config: RunnableConfig) -> MemoryConfiguration:
-        return MemoryConfiguration.from_runnable_config(config)
-
-    def call_model(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        cfg = _config(config)
-        namespace = ("memories", cfg.user_id)
-        memories = list(store.search(namespace))
-        formatted = (
-            "\n".join(f"- {item.value['content']}" for item in memories)
-            or "No saved memories."
-        )
-        system_msg = MODEL_SYSTEM_MESSAGE.format(memory=formatted)
-        response = llm.invoke([SystemMessage(content=system_msg), *state["messages"]])
-        return {"messages": response}
-
     def write_memory(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        cfg = _config(config)
+        """Update user memories using TrustCall extractor.
+
+        Args:
+            state: Current conversation state
+            config: Runnable configuration
+            store: Memory store for user facts
+        """
+        cfg = _create_config_helper(config)
         namespace = ("memories", cfg.user_id)
         current_items = list(store.search(namespace))
+
+        # Prepare existing memories for TrustCall
         existing = (
             [(item.key, "Memory", item.value) for item in current_items]
             if current_items
             else None
         )
+
+        # Invoke TrustCall extractor to update memories
         request_messages = [
             SystemMessage(content=TRUSTCALL_INSTRUCTION),
             *state["messages"],
         ]
         result = extractor.invoke({"messages": request_messages, "existing": existing})
 
+        # Store updated memories
         for response, meta in zip(result["responses"], result["response_metadata"]):
             key = meta.get("json_doc_id") or str(uuid.uuid4())
             store.put(namespace, key, response.model_dump(mode="json"))
 
+    return write_memory
+
+
+def build_memory_collection_graph(model: ChatOpenAI | None = None):
+    """Compile a graph that stores multiple user memories via TrustCall.
+
+    This memory service extracts structured facts with TrustCall, stores them
+    as a searchable collection, and replays them during conversation.
+
+    Args:
+        model: Optional ChatOpenAI model instance. If None, creates default LLM.
+
+    Returns:
+        Compiled LangGraph with memory collection capabilities
+    """
+    llm = model or create_llm()
+
+    # Create node functions
+    call_model = _create_call_model_node(llm)
+    write_memory = _create_write_memory_node(llm)
+
+    # Build the graph
     builder = StateGraph(MessagesState, config_schema=MemoryConfiguration)
     builder.add_node("call_model", call_model)
     builder.add_node("write_memory", write_memory)
@@ -121,11 +175,20 @@ def build_memory_collection_graph(model: ChatOpenAI | None = None):
 
 
 def inspect_saved_memories(graph, user_id: str) -> None:
+    """Inspect and display all saved memories for a given user.
+
+    Args:
+        graph: Compiled LangGraph instance
+        user_id: User identifier to retrieve memories for
+    """
     memory_store: InMemoryStore = graph.store  # type: ignore[assignment]
     namespace = ("memories", user_id)
     items = list(memory_store.search(namespace))
+
     if not items:
         print("No memories stored yet.")
+        return
+
     for item in items:
         print(f"[{item.key}] {item.value['content']}")
 
