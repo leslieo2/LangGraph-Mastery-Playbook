@@ -24,7 +24,7 @@ from src.langgraph_learning.utils import (
     divide,
     multiply,
     pretty_print_messages,
-    require_env,
+    require_llm_provider_api_key,
     save_graph_image,
 )
 
@@ -67,7 +67,7 @@ def run_demo(app) -> None:
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     app = build_agent_graph()
     save_graph_image(app, filename="artifacts/agent_with_memory.png", xray=True)
     run_demo(app)

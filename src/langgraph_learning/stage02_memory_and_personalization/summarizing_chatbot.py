@@ -29,7 +29,7 @@ from src.langgraph_learning.utils import (
     create_llm,
     maybe_enable_langsmith,
     pretty_print_messages,
-    require_env,
+    require_llm_provider_api_key,
     save_graph_image,
 )
 
@@ -102,7 +102,7 @@ def run_conversation(graph, prompts: Iterable[str], thread_id: str) -> None:
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     maybe_enable_langsmith()
     model = create_llm()
 

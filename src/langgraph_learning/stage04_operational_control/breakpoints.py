@@ -28,7 +28,7 @@ from src.langgraph_learning.utils import (
     divide,
     maybe_enable_langsmith,
     multiply,
-    require_env,
+    require_llm_provider_api_key,
     save_graph_image,
 )
 
@@ -115,7 +115,7 @@ def approval_flow(graph) -> None:
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     maybe_enable_langsmith()
     graph = build_tool_agent_graph_with_breakpoint()
 

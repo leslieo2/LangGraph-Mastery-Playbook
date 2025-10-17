@@ -21,7 +21,7 @@ from src.langgraph_learning.utils import (
     create_llm,
     multiply,
     pretty_print_messages,
-    require_env,
+    require_llm_provider_api_key,
     save_graph_image,
 )
 
@@ -51,7 +51,7 @@ def run_demo(graph) -> None:
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     graph = build_tool_calling_graph()
     save_graph_image(graph, filename="artifacts/tool_router.png")
     run_demo(graph)

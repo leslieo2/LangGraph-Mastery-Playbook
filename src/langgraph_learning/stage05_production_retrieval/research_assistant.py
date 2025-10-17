@@ -37,6 +37,7 @@ from src.langgraph_learning.utils import (
     create_llm,
     maybe_enable_langsmith,
     require_env,
+    require_llm_provider_api_key,
     save_graph_image,
 )
 
@@ -503,7 +504,7 @@ def run_demo(graph: StateGraph) -> None:
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     require_env("TAVILY_API_KEY")
     maybe_enable_langsmith(project="langgraph-research-assistant")
     graph = build_research_assistant_graph()

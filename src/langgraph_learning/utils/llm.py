@@ -168,3 +168,33 @@ def create_llm(
 
     config.update(overrides)
     return ChatOpenAI(**config)
+
+
+def require_llm_provider_api_key(provider: str | None = None) -> None:
+    """Ensure the active LLM provider has credentials configured."""
+    provider_name = (
+        provider or os.getenv("LLM_PROVIDER") or _default_provider()
+    ).lower()
+    settings = _PROVIDER_SETTINGS.get(provider_name)
+    if settings is None:
+        raise ValueError(
+            f"Unsupported LLM provider '{provider_name}'. "
+            f"Configure LLM_PROVIDER to one of: {', '.join(sorted(_PROVIDER_SETTINGS))}."
+        )
+
+    env_names = settings["env"]
+    defaults = settings["defaults"]
+
+    api_key_env = env_names.get("api_key")
+    default_api_key = defaults.get("api_key")
+
+    if default_api_key:
+        return
+
+    if api_key_env and os.getenv(api_key_env):
+        return
+
+    raise RuntimeError(
+        f"{api_key_env or 'API key'} must be set for provider '{provider_name}'. "
+        "Set the environment variable or pass `api_key` to `create_llm`."
+    )

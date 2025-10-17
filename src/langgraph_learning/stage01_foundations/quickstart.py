@@ -16,7 +16,11 @@ from __future__ import annotations
 from langchain_tavily import TavilySearch
 from langchain_core.messages import HumanMessage
 
-from src.langgraph_learning.utils import create_llm, require_env
+from src.langgraph_learning.utils import (
+    create_llm,
+    require_env,
+    require_llm_provider_api_key,
+)
 
 
 def run_basic_chat(model: str | None = None) -> None:
@@ -42,6 +46,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     require_env("TAVILY_API_KEY")
     main()

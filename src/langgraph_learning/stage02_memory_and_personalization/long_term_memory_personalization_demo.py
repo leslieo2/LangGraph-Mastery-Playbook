@@ -36,7 +36,7 @@ from src.langgraph_learning.utils import (
     create_llm,
     maybe_enable_langsmith,
     pretty_print_messages,
-    require_env,
+    require_llm_provider_api_key,
     save_graph_image,
 )
 
@@ -68,6 +68,7 @@ def build_memory_graph(model: ChatOpenAI | None = None):
         return MemoryConfiguration.from_runnable_config(config)
 
     def call_model(state: MessagesState, config: RunnableConfig, store: BaseStore):
+        # Only pull user-level settings; thread_id stays in the original config for MemorySaver.
         cfg = _config(config)
         namespace = ("memory", cfg.user_id)
         key = "user_memory"
@@ -80,6 +81,7 @@ def build_memory_graph(model: ChatOpenAI | None = None):
         return {"messages": response}
 
     def write_memory(state: MessagesState, config: RunnableConfig, store: BaseStore):
+        # Same idea here—thread_id remains on config while we use user_id for storage.
         cfg = _config(config)
         namespace = ("memory", cfg.user_id)
         existing = store.get(namespace, "user_memory")
@@ -102,7 +104,7 @@ def build_memory_graph(model: ChatOpenAI | None = None):
     checkpointer = MemorySaver()
 
     graph = builder.compile(store=long_term_memory, checkpointer=checkpointer)
-    save_graph_image(graph, filename="artifacts/memory_store_graph.png", xray=True)
+    save_graph_image(graph, filename="artifacts/long_term_memory_personalization_demo.png", xray=True)
     return graph
 
 
@@ -123,7 +125,7 @@ def demo_conversation(graph) -> None:
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     maybe_enable_langsmith()
     graph = build_memory_graph()
     demo_conversation(graph)

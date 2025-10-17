@@ -13,7 +13,6 @@ Lesson Flow
 
 from __future__ import annotations
 
-import os
 from uuid import uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -27,7 +26,7 @@ from src.langgraph_learning.utils import (
     divide,
     maybe_enable_langsmith,
     multiply,
-    require_env,
+    require_llm_provider_api_key,
     save_graph_image,
 )
 
@@ -166,7 +165,7 @@ def fork_from_snapshot(graph, snapshot) -> None:
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     maybe_enable_langsmith()
     graph = build_time_travel_graph()
     config = run_initial_execution(graph)

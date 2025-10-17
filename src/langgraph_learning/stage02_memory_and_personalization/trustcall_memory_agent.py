@@ -44,7 +44,7 @@ from src.langgraph_learning.utils import (
     ToolCallSpy,
     maybe_enable_langsmith,
     pretty_print_messages,
-    require_env,
+    require_llm_provider_api_key,
     save_graph_image,
     summarize_tool_calls,
 )
@@ -303,7 +303,7 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     maybe_enable_langsmith()
     graph = build_trustcall_agent()
     config = {"configurable": {"thread_id": "memory-agent-demo", "user_id": "leslie"}}

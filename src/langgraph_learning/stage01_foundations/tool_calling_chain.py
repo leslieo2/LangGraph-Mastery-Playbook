@@ -24,7 +24,7 @@ from src.langgraph_learning.utils import (
     create_llm,
     multiply,
     pretty_print_messages,
-    require_env,
+    require_llm_provider_api_key,
     save_graph_image,
 )
 
@@ -96,7 +96,7 @@ def run_app_demo(app) -> None:
 
 
 def main() -> None:
-    require_env("OPENAI_API_KEY")
+    require_llm_provider_api_key()
     inspect_messages()
     inspect_tool_binding()
     inspect_add_messages()
