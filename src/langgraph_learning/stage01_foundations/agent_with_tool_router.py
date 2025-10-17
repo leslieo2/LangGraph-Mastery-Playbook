@@ -53,7 +53,7 @@ def run_demo(graph) -> None:
 def main() -> None:
     require_llm_provider_api_key()
     graph = build_tool_calling_graph()
-    save_graph_image(graph, filename="artifacts/tool_router.png")
+    save_graph_image(graph, filename="artifacts/agent_with_tool_router.png")
     run_demo(graph)
 
 

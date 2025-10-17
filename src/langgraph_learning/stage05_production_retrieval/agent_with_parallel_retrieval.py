@@ -109,7 +109,7 @@ def build_parallel_retrieval_graph() -> StateGraph:
     builder.add_edge("generate_answer", END)
 
     graph = builder.compile()
-    save_graph_image(graph, filename="artifacts/parallel_retrieval.png")
+    save_graph_image(graph, filename="artifacts/agent_with_parallel_retrieval.png")
     return graph
 
 

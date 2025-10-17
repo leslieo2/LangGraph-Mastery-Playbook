@@ -1,5 +1,10 @@
 """This LangGraph arithmetic agent keeps checkpoints between tool calls so it can reuse previous answers when the user follows up later.
 
+Memory Type: Short-term (conversation-level) memory
+- Scope: Single thread conversation context
+- Storage: MemorySaver checkpointer preserves full message history
+- Purpose: Maintain conversation continuity within a single session which shares same thread_id
+
 What You'll Learn
 1. Extend a reactive agent with checkpoints so it can remember prior turns.
 2. Configure a `MemorySaver` checkpointer to maintain conversation state across invocations.
@@ -69,7 +74,7 @@ def run_demo(app) -> None:
 def main() -> None:
     require_llm_provider_api_key()
     app = build_agent_graph()
-    save_graph_image(app, filename="artifacts/agent_with_memory.png", xray=True)
+    save_graph_image(app, filename="artifacts/agent_with_short_term_memory.png", xray=True)
     run_demo(app)
 
 

@@ -111,7 +111,7 @@ def demonstrate_explicit_io_schemas() -> None:
     builder.add_edge("answer_node", END)
     graph = builder.compile()
 
-    save_graph_image(graph, filename="artifacts/explicit_io_schemas.png")
+    save_graph_image(graph, filename="artifacts/agent_with_multiple_state.png")
     print("Result:", graph.invoke({"question": "hi"}))
 
 

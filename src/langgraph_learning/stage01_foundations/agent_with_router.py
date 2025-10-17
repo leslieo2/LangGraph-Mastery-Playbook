@@ -65,7 +65,7 @@ def build_graph():
 
 def visualize(app) -> None:
     """Render the graph to a PNG file."""
-    save_graph_image(app, filename="artifacts/simple_state_graph.png")
+    save_graph_image(app, filename="artifacts/agent_with_router.png")
 
 
 def run_demo(app) -> None:

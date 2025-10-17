@@ -51,8 +51,6 @@ def demonstrate_basic_messages(llm: ChatOpenAI):
     builder.add_edge(START, "chat_model")
     builder.add_edge("chat_model", END)
     graph = builder.compile()
-
-    save_graph_image(graph, filename="artifacts/basic_messages.png")
     output = graph.invoke({"messages": messages})
     pretty_print_messages(output["messages"], header="Model response")
     return messages, output
@@ -92,7 +90,7 @@ def demonstrate_filter_with_reducer(
     builder.add_edge("chat_model", END)
     graph = builder.compile()
 
-    save_graph_image(graph, filename="artifacts/reducer_filter.png")
+    save_graph_image(graph, filename="artifacts/agent_with_message_reduce_filter.png")
     output = graph.invoke({"messages": messages})
     pretty_print_messages(output["messages"], header="After reducer filtering")
     return messages, output
@@ -121,7 +119,6 @@ def demonstrate_message_filtering(
     builder.add_edge("chat_model", END)
     graph = builder.compile()
 
-    save_graph_image(graph, filename="artifacts/invocation_filter.png")
     output = graph.invoke({"messages": messages})
     pretty_print_messages(output["messages"], header="Filtered invocation result")
     return messages, output
@@ -166,7 +163,7 @@ def demonstrate_trim_messages(
     builder.add_edge("chat_model", END)
     graph = builder.compile()
 
-    save_graph_image(graph, filename="artifacts/trim_messages.png")
+    save_graph_image(graph, filename="artifacts/agent_with_message_trim.png")
     output = graph.invoke({"messages": messages})
     pretty_print_messages(output["messages"], header="Trimming invocation result")
     return output

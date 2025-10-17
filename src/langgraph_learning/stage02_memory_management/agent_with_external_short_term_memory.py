@@ -84,7 +84,7 @@ def build_chatbot_graph(model: ChatOpenAI, db_path: Path) -> StateGraph:
 
     memory = SqliteSaver(conn)
     graph = workflow.compile(checkpointer=memory)
-    save_graph_image(graph, filename="artifacts/external_memory_chatbot.png")
+    save_graph_image(graph, filename="artifacts/agent_with_external_short_term_memory.png")
     return graph
 
 

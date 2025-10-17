@@ -95,7 +95,7 @@ def build_streaming_graph(model: ChatOpenAI):
     memory = MemorySaver()
     graph = workflow.compile(checkpointer=memory)
 
-    save_graph_image(graph, filename="artifacts/streaming_chatbot.png")
+    save_graph_image(graph, filename="artifacts/agent_with_stream_interruption.png")
     return graph
 
 

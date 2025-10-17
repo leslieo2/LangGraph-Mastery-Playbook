@@ -73,7 +73,7 @@ def build_tool_agent_graph_with_breakpoint():
     )
 
     save_graph_image(
-        graph, filename="artifacts/debugging/tool_agent_breakpoint.png", xray=True
+        graph, filename="artifacts/agent_with_interruption.png", xray=True
     )
     return graph
 

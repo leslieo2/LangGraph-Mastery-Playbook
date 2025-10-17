@@ -20,7 +20,7 @@
 Run the Stage 03 map-reduce lesson to see LangGraph parallelism and structured outputs in action:
 
 ```bash
-uv run python -m src.langgraph_learning.stage05_production_retrieval.research_assistant
+uv run python -m src.langgraph_learning.stage05_production_retrieval.agent_with_deep_research
 ```
 
 Example output:
@@ -28,7 +28,7 @@ Example output:
 
 The lesson also saves a graph diagram you can reference or share:
 
-<img src="src/langgraph_learning/stage05_production_retrieval/artifacts/research_assistant.png" alt="Research Agent Graph" width="50%">
+<img src="src/langgraph_learning/stage05_production_retrieval/artifacts/agent_with_deep_research.png" alt="Research Agent Graph" width="50%">
 
 ## Why This Project?
 
@@ -42,9 +42,9 @@ The lesson also saves a graph diagram you can reference or share:
 | Stage | Focus & Flagship Lesson | Skill Gains | Est. Time |
 | --- | --- | --- | --- |
 | `stage01_foundations` → `quickstart` | Build your first LangGraph agent that chats and calls a Tavily search tool. | Validate credentials early, invoke chat models, and integrate third-party tools. | ~45 min |
-| `stage02_memory_and_personalization` → `agent_with_memory` | Add conversation memory backed by checkpoints and persistence. | Configure `MemorySaver`, reuse prior turns, and checkpoint graph state between runs. | ~60 min |
-| `stage03_state_architecture` → `map_reduce_joke_selector` | Fan out work with map-reduce and structured outputs. | Design typed state, parallelize nodes with `Send`, and synthesize results. | ~75 min |
-| `stage04_operational_control` → `breakpoints` | Debug and steer long-running graphs in real time. | Use breakpoints, streaming modes, history trimming, and trust-call inspection. | ~60 min |
+| `stage02_memory_and_personalization` → `agent_with_short_term_memory` | Add conversation memory backed by checkpoints and persistence. | Configure `MemorySaver`, reuse prior turns, and checkpoint graph state between runs. | ~60 min |
+| `stage03_state_management` → `agent_with_parallel_nodes` | Fan out work with map-reduce and structured outputs. | Design typed state, parallelize nodes with `Send`, and synthesize results. | ~75 min |
+| `stage04_interruption_and_human_in_the_loop` → `agent_with_interruption` | Debug and steer long-running graphs in real time. | Use breakpoints, streaming modes, history trimming, and trust-call inspection. | ~60 min |
 | `stage05_production_retrieval` → `parallel_retrieval` | Ship production-ready retrieval and synthesis workflows. | Blend parallel retrievers, merge context chunks, and add production guardrails. | ~90 min |
 
 Every Python file begins with a “What You'll Learn / Lesson Flow” docstring so you can skim the topic before running it.
@@ -94,15 +94,15 @@ Each script is executable via `python -m` (uv users can also run `uv run ...`):
 ```bash
 # Stage 01 examples
 python -m src.langgraph_learning.stage01_foundations.quickstart
-python -m src.langgraph_learning.stage01_foundations.tool_calling_chain
+python -m src.langgraph_learning.stage01_foundations.agent_with_tool_call
 
 # Stage 02 memory systems
-python -m src.langgraph_learning.stage02_memory_and_personalization.agent_with_memory
-python -m src.langgraph_learning.stage02_memory_and_personalization.long_term_memory_personalization_demo
-python -m src.langgraph_learning.stage02_memory_and_personalization.trustcall_memory_agent
+python -m src.langgraph_learning.stage02_memory_management.agent_with_short_term_memory
+python -m src.langgraph_learning.stage02_memory_management.agent_with_long_term_memory
+python -m src.langgraph_learning.stage02_memory_management.trustcall_memory_agent
 
 # Stage 04 operational control
-python -m src.langgraph_learning.stage04_operational_control.breakpoints
+python -m src.langgraph_learning.stage04_interruption_and_human_in_the_loop.breakpoints
 ```
 
 Most lessons generate a graph visualization (PNG) inside the module’s `artifacts/` directory. Streaming lessons print incremental updates; debugging lessons may prompt for manual approval.

@@ -61,7 +61,6 @@ def demonstrate_default_overwrite() -> None:
     builder.add_edge("node_increment", END)
     graph = builder.compile()
 
-    render_graph(graph, "artifacts/default_overwrite.png")
     result = graph.invoke({"foo": 1})
     print("Result:", result)
 
@@ -90,7 +89,6 @@ def demonstrate_branching_conflict() -> None:
     builder.add_edge("node_3", END)
     graph = builder.compile()
 
-    render_graph(graph, "artifacts/branching_conflict.png")
     try:
         print(graph.invoke({"foo": 1}))
     except InvalidUpdateError as exc:
@@ -121,7 +119,6 @@ def demonstrate_reducer_append() -> None:
     builder.add_edge("node_3", END)
     graph = builder.compile()
 
-    render_graph(graph, "artifacts/reducer_append.png")
     print(graph.invoke({"foo": [1]}))
     try:
         graph.invoke({"foo": None})  # type: ignore[arg-type]
@@ -129,62 +126,10 @@ def demonstrate_reducer_append() -> None:
         print("TypeError occurred:", exc)
 
 
-def demonstrate_messages_reducer() -> None:
-    initial_messages = [
-        AIMessage(content="Hello! How can I assist you?", name="Model"),
-        HumanMessage(
-            content="I'm looking for information on marine biology.", name="Leslie"
-        ),
-    ]
-    new_message = AIMessage(
-        content="Sure, I can help with that. What specifically are you interested in?",
-        name="Model",
-    )
-
-    print("\n--- Messages: append ---")
-    print(add_messages(initial_messages, new_message))
-
-    overwrite_source = [
-        AIMessage(content="Hello! How can I assist you?", name="Model", id="1"),
-        HumanMessage(
-            content="I'm looking for information on marine biology.",
-            name="Leslie",
-            id="2",
-        ),
-    ]
-    overwrite_message = HumanMessage(
-        content="I'm looking for information on whales, specifically",
-        name="Leslie",
-        id="2",
-    )
-
-    print("\n--- Messages: overwrite by id ---")
-    print(add_messages(overwrite_source, overwrite_message))
-
-    messages = [
-        AIMessage("Hi.", name="Bot", id="1"),
-        HumanMessage("Hi.", name="Leslie", id="2"),
-        AIMessage(
-            "So you said you were researching ocean mammals?", name="Bot", id="3"
-        ),
-        HumanMessage(
-            "Yes, I know about whales. But what others should I learn about?",
-            name="Leslie",
-            id="4",
-        ),
-    ]
-    delete_messages = [RemoveMessage(id=m.id) for m in messages[:2]]
-
-    print("\n--- Messages: removal ---")
-    print("Delete instructions:", delete_messages)
-    print(add_messages(messages, delete_messages))
-
-
 def main() -> None:
     demonstrate_default_overwrite()
     demonstrate_branching_conflict()
     demonstrate_reducer_append()
-    demonstrate_messages_reducer()
 
 
 if __name__ == "__main__":

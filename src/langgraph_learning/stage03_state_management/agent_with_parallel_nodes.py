@@ -126,7 +126,7 @@ def main() -> None:
     require_llm_provider_api_key()
     maybe_enable_langsmith(project="langgraph-map-reduce")
     app = build_map_reduce_app()
-    save_graph_image(app, filename="artifacts/map_reduce_jokes.png")
+    save_graph_image(app, filename="artifacts/agent_with_parallel_nodes.png")
     stream_demo(app)
 
 

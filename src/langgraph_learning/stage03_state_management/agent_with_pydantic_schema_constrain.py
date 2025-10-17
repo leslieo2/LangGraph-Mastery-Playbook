@@ -80,7 +80,6 @@ def node_1_typed_dict(state: TypedDictState) -> Dict[str, str]:
 
 def run_typed_dict_example() -> None:
     graph = build_graph(TypedDictState, node_1_typed_dict)
-    save_graph_image(graph, filename="artifacts/typed_dict_state.png")
     print("Result:", graph.invoke({"name": "Leslie"}))
 
 
@@ -91,7 +90,6 @@ def node_1_dataclass(state: DataclassState) -> Dict[str, str]:
 
 def run_dataclass_example() -> None:
     graph = build_graph(DataclassState, node_1_dataclass)
-    save_graph_image(graph, filename="artifacts/dataclass_state.png")
     # Provide a valid initial mood as a placeholder; the graph will overwrite it.
     print("Result:", graph.invoke(DataclassState(name="Leslie", mood="sad")))
 
@@ -110,7 +108,7 @@ def demonstrate_pydantic_validation() -> None:
 
 def run_pydantic_example() -> None:
     graph = build_graph(PydanticState, node_1_pydantic)
-    save_graph_image(graph, filename="artifacts/pydantic_state.png")
+    save_graph_image(graph, filename="artifacts/agent_with_pydantic_schema_constrain.png")
     print("Result:", graph.invoke(PydanticState(name="Leslie", mood="sad")))
 
 

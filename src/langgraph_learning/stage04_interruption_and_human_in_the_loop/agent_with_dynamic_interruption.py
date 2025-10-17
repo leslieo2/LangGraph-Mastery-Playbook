@@ -65,7 +65,7 @@ def build_dynamic_breakpoint_graph():
 
     memory = MemorySaver()
     graph = builder.compile(checkpointer=memory)
-    save_graph_image(graph, filename="artifacts/debugging/dynamic_breakpoints.png")
+    save_graph_image(graph, filename="artifacts/debugging/agent_with_dynamic_interruption.png")
     return graph
 
 

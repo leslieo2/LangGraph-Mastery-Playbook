@@ -102,7 +102,7 @@ def main() -> None:
     inspect_add_messages()
 
     app = build_tool_calling_app()
-    save_graph_image(app, filename="artifacts/tool_calling_chain.png")
+    save_graph_image(app, filename="artifacts/agent_with_tool_call.png")
     run_app_demo(app)
 
 

@@ -204,7 +204,7 @@ def run_demo(app) -> None:
 
 def main() -> None:
     app = build_entry_app()
-    save_graph_image(app, filename="artifacts/subgraph_entry.png", xray=True)
+    save_graph_image(app, filename="artifacts/agent_with_subgraph.png", xray=True)
     run_demo(app)
 
 

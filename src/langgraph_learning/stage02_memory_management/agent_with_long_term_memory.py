@@ -1,5 +1,10 @@
 """This LangGraph memory agent reflects on each turn, writes bullet-point memories to an in-memory store, and personalizes future replies with the stored notes.
 
+Memory Type: Long-term (user-level) memory
+- Scope: Cross-thread user information and preferences
+- Storage: InMemoryStore for structured user data + MemorySaver for conversation state
+- Purpose: Personalize responses across multiple conversations with the same user which shares the same user_id
+
 What You'll Learn
 1. Personalize responses by reading and writing user memory within a LangGraph workflow.
 2. Reflect on recent conversation turns to synthesize structured memory snippets.
@@ -29,7 +34,7 @@ if __package__ in {None, ""}:
     if project_root not in sys.path:
         sys.path.append(project_root)
 
-from src.langgraph_learning.stage02_memory_and_personalization.configuration import (
+from src.langgraph_learning.stage02_memory_management.configuration import (
     MemoryConfiguration,
 )
 from src.langgraph_learning.utils import (
@@ -105,7 +110,7 @@ def build_memory_graph(model: ChatOpenAI | None = None):
 
     graph = builder.compile(store=long_term_memory, checkpointer=checkpointer)
     save_graph_image(
-        graph, filename="artifacts/long_term_memory_personalization_demo.png", xray=True
+        graph, filename="artifacts/agent_with_long_term_memory.png", xray=True
     )
     return graph
 

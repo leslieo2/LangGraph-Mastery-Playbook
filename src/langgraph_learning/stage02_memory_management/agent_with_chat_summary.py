@@ -80,7 +80,7 @@ def build_chatbot_graph(model: ChatOpenAI):
     workflow.add_edge("summarize_conversation", END)
 
     graph = workflow.compile(checkpointer=memory)
-    save_graph_image(graph, filename="artifacts/summarizing_chatbot.png")
+    save_graph_image(graph, filename="artifacts/agent_with_chat_summary.png")
     return graph
 
 
