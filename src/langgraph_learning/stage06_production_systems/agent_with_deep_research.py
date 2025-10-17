@@ -508,7 +508,9 @@ def main() -> None:
     require_env("TAVILY_API_KEY")
     maybe_enable_langsmith(project="langgraph-research-assistant")
     graph = build_research_assistant_graph()
-    save_graph_image(graph, filename="artifacts/agent_with_deep_research.png", xray=True)
+    save_graph_image(
+        graph, filename="artifacts/agent_with_deep_research.png", xray=True
+    )
     run_demo(graph)
 
 

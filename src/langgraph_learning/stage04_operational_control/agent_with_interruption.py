@@ -72,9 +72,7 @@ def build_tool_agent_graph_with_breakpoint():
         checkpointer=memory,
     )
 
-    save_graph_image(
-        graph, filename="artifacts/agent_with_interruption.png", xray=True
-    )
+    save_graph_image(graph, filename="artifacts/agent_with_interruption.png", xray=True)
     return graph
 
 

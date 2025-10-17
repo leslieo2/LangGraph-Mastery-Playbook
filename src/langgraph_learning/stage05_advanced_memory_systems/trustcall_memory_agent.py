@@ -20,7 +20,12 @@ from typing import Iterable, Literal, Optional, Sequence, TypedDict
 from pydantic import BaseModel, Field
 from trustcall import create_extractor
 
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, merge_message_runs
+from langchain_core.messages import (
+    BaseMessage,
+    HumanMessage,
+    SystemMessage,
+    merge_message_runs,
+)
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
@@ -173,9 +178,7 @@ def _format_trustcall_messages(
     instruction: str,
 ) -> list[BaseMessage]:
     """Prepend system instruction and merge consecutive runs for TrustCall."""
-    merged = merge_message_runs(
-        [SystemMessage(content=instruction), *messages[:-1]]
-    )
+    merged = merge_message_runs([SystemMessage(content=instruction), *messages[:-1]])
     return list(merged)
 
 
@@ -236,7 +239,9 @@ def _format_todo_list(todos: list[dict]) -> str:
     return "\n".join(map(str, todos)) or "No tasks saved."
 
 
-def _create_system_message(profile: dict, todos: list[dict], instructions: str) -> SystemMessage:
+def _create_system_message(
+    profile: dict, todos: list[dict], instructions: str
+) -> SystemMessage:
     """Create system message with current memory state.
 
     Args:
@@ -271,9 +276,7 @@ def _create_task_maistro_node(llm: ChatOpenAI):
 
         # Process with tool-enabled LLM
         tool_llm = llm.bind_tools([UpdateMemory], parallel_tool_calls=False)
-        response = tool_llm.invoke(
-            [system_msg, *state["messages"]]
-        )
+        response = tool_llm.invoke([system_msg, *state["messages"]])
         return {"messages": [response]}
 
     return task_maistro
@@ -363,9 +366,7 @@ def _create_todo_extractor_with_monitoring(llm: ChatOpenAI):
     return todo_extractor, spy
 
 
-def _process_todo_update(
-    todo_extractor, messages, existing_docs, namespace, store
-):
+def _process_todo_update(todo_extractor, messages, existing_docs, namespace, store):
     """Process todo update using TrustCall extractor.
 
     Args:
@@ -378,9 +379,7 @@ def _process_todo_update(
     Returns:
         Tool call spy for monitoring
     """
-    result = todo_extractor.invoke(
-        {"messages": messages, "existing": existing_docs}
-    )
+    result = todo_extractor.invoke({"messages": messages, "existing": existing_docs})
 
     responses = result.get("responses") or []
     metadata = result.get("response_metadata") or []
@@ -402,9 +401,7 @@ def _create_todos_updater(llm: ChatOpenAI):
         formatted_instruction = TRUSTCALL_INSTRUCTION.format(
             time=datetime.now().isoformat()
         )
-        messages = _format_trustcall_messages(
-            state["messages"], formatted_instruction
-        )
+        messages = _format_trustcall_messages(state["messages"], formatted_instruction)
 
         # Create extractor with monitoring
         todo_extractor, spy = _create_todo_extractor_with_monitoring(llm)
@@ -415,11 +412,7 @@ def _create_todos_updater(llm: ChatOpenAI):
         # Return tool response
         summary = summarize_tool_calls(spy.called_tools, schema_name="ToDo")
         tool_call_id = _last_tool_call_id(state)
-        return {
-            "messages": [
-                _tool_message(summary, tool_call_id)
-            ]
-        }
+        return {"messages": [_tool_message(summary, tool_call_id)]}
 
     return update_todos
 
@@ -497,7 +490,13 @@ def _create_all_nodes(llm: ChatOpenAI):
     update_todos = _create_todos_updater(llm)
     update_instructions = _create_instructions_updater(llm)
     route_message = _create_router()
-    return task_maistro, update_profile, update_todos, update_instructions, route_message
+    return (
+        task_maistro,
+        update_profile,
+        update_todos,
+        update_instructions,
+        route_message,
+    )
 
 
 def _build_multi_memory_graph_structure(builder, nodes):
@@ -507,7 +506,9 @@ def _build_multi_memory_graph_structure(builder, nodes):
         builder: StateGraph builder instance
         nodes: Tuple of (task_maistro, update_profile, update_todos, update_instructions, route_message)
     """
-    task_maistro, update_profile, update_todos, update_instructions, route_message = nodes
+    task_maistro, update_profile, update_todos, update_instructions, route_message = (
+        nodes
+    )
 
     builder.add_node("task_maistro", task_maistro)
     builder.add_node("update_profile", update_profile)

@@ -53,9 +53,7 @@ def build_time_travel_graph():
     builder.add_edge("tools", "assistant")
 
     graph = builder.compile(checkpointer=MemorySaver())
-    save_graph_image(
-        graph, filename="artifacts/agent_with_time_travel.png", xray=True
-    )
+    save_graph_image(graph, filename="artifacts/agent_with_time_travel.png", xray=True)
     return graph
 
 

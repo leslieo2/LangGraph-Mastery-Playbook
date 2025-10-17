@@ -108,7 +108,9 @@ def demonstrate_pydantic_validation() -> None:
 
 def run_pydantic_example() -> None:
     graph = build_graph(PydanticState, node_1_pydantic)
-    save_graph_image(graph, filename="artifacts/agent_with_pydantic_schema_constrain.png")
+    save_graph_image(
+        graph, filename="artifacts/agent_with_pydantic_schema_constrain.png"
+    )
     print("Result:", graph.invoke(PydanticState(name="Leslie", mood="sad")))
 
 

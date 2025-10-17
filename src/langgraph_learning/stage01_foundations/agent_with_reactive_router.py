@@ -63,7 +63,9 @@ def run_demo(app) -> None:
 def main() -> None:
     require_llm_provider_api_key()
     app = build_agent_graph()
-    save_graph_image(app, filename="artifacts/agent_with_reactive_router.png", xray=True)
+    save_graph_image(
+        app, filename="artifacts/agent_with_reactive_router.png", xray=True
+    )
     run_demo(app)
 
 
