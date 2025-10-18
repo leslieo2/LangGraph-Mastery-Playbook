@@ -1,4 +1,26 @@
-"""This LangGraph streaming assistant alternates between live conversation and summarization while exposing raw chunks, value snapshots, and async events.
+"""
+Streaming Control: Inspecting Live Updates and Summaries
+
+=== PROBLEM STATEMENT ===
+Streaming agents emit many partial updates. Without structured tooling, developers can’t
+see raw token chunks, intermediate state, or async event hooks, making debugging painful.
+
+=== CORE SOLUTION ===
+This lesson alternates between conversation turns and summarization while exercising all
+LangGraph streaming modes—`stream_mode='updates'`, `stream_mode='values'`, and
+`astream_events`—so you can observe chunks, state snapshots, and event metadata.
+
+=== KEY INNOVATION ===
+- **Multi-Mode Streaming**: Contrast raw chunk streams with assembled message updates.
+- **Summary Pruning**: Periodically condense history to keep long chats manageable.
+- **Async Event Hooks**: Tap into `astream_events` to monitor tokens and node activity.
+
+=== COMPARISON WITH SYNC RUNS ===
+| Synchronous Execution | Streaming Control (this file) |
+|-----------------------|--------------------------------|
+| Only final response visible | Inspect chunks, snapshots, and events as they happen |
+| Hard to debug token flow | Token-level hooks via `astream_events` |
+| No mid-run summaries | Alternating conversation + summarizer node |
 
 What You'll Learn
 1. Enable streaming across LangGraph, including raw chunk updates and value snapshots.

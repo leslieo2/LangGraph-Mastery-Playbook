@@ -1,9 +1,30 @@
-"""This LangGraph memory agent reflects on each turn, writes bullet-point memories to an in-memory store, and personalizes future replies with the stored notes.
+"""
+Long-Term Memory Agent: Bullet-Point Reflections for Personalized Replies
 
-Memory Type: Long-term (user-level) memory
-- Scope: Cross-thread user information and preferences
-- Storage: InMemoryStore for structured user data + MemorySaver for conversation state
-- Purpose: Personalize responses across multiple conversations with the same user which shares the same user_id
+=== PROBLEM STATEMENT ===
+Conversational agents quickly forget user details when each turn is treated in isolation.
+Without persistent memory, they repeat questions, miss preferences, and lose continuity
+across sessions—especially when the same user returns in a new thread.
+
+=== CORE SOLUTION ===
+This lesson builds a LangGraph that reads long-term memory before responding and writes
+structured bullet summaries after each turn. An `InMemoryStore` keeps user-level notes,
+while `MemorySaver` maintains per-thread state for reliable conversation playback.
+
+=== KEY INNOVATION ===
+- **Cross-Thread Personalization**: Memory is keyed by `user_id`, so knowledge survives
+  across conversations.
+- **Reflection Loop**: A dedicated write node distills the latest chat into clear,
+  bulleted facts.
+- **Config-Driven Access**: `RunnableConfig` provides both `thread_id` and `user_id`,
+  demonstrating how LangGraph configuration steers storage and retrieval.
+
+=== COMPARISON WITH STRUCTURED PROFILES ===
+| Structured Profiles (TrustCall) | Long-Term Bullet Memory (this file) |
+|---------------------------------|-------------------------------------|
+| JSON schemas with field-level updates | Free-form bullet list stored as text |
+| TrustCall manages incremental patches | Model regenerates entire summary each turn |
+| Rich structure for downstream automation | Lightweight notes for quick personalization |
 
 What You'll Learn
 1. Personalize responses by reading and writing user memory within a LangGraph workflow.

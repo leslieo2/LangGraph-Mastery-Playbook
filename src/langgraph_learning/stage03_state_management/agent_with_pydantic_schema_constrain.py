@@ -1,4 +1,27 @@
-"""This LangGraph schema lab runs the same branching workflow across `TypedDict`, dataclass, and Pydantic states to compare validation behavior.
+"""
+Schema Constraints: Comparing TypedDict, Dataclass, and Pydantic States
+
+=== PROBLEM STATEMENT ===
+When state evolves across nodes, developers must choose how strictly to validate it.
+Loose typing speeds iteration but risks hidden bugs; strict validation catches issues but
+adds friction. Understanding the trade-offs is essential for production graphs.
+
+=== CORE SOLUTION ===
+This lesson runs the same branching LangGraph with three schema strategies—`TypedDict`,
+dataclass, and Pydantic—so you can see how validation behaves at compile time and during
+execution.
+
+=== KEY INNOVATION ===
+- **Schema Swapping**: Reuse one `build_graph` helper while plugging in different state types.
+- **Validation Demos**: Intentionally trigger Pydantic errors to highlight stricter checks.
+- **Consistent Flow**: Keep node logic identical to isolate schema differences.
+
+=== COMPARISON WITH LOOSE TYPING ===
+| Loose TypedDict / Dataclass | Pydantic Constraints (this file) |
+|-----------------------------|----------------------------------|
+| Minimal validation overhead | Automatic field checks and detailed errors |
+| Easier to mock during tests | Requires schema-compliant inputs |
+| Bugs may surface later       | Early failure with clear messages |
 
 What You'll Learn
 1. Compare different state schema strategies: `TypedDict`, dataclass, and Pydantic models.

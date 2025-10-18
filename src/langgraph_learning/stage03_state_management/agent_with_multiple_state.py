@@ -1,4 +1,29 @@
-"""This LangGraph workflow experiments with private nodes, shared state, and explicit input/output schemas to control what data each node can access.
+"""
+Multi-Schema State Management: Controlling Visibility per Node
+
+=== PROBLEM STATEMENT ===
+Real workflows often require certain nodes to see private fields while others should only
+handle a public subset. Relying on one global schema makes it hard to hide intermediate
+values or design limited interfaces for downstream consumers.
+
+=== CORE SOLUTION ===
+This lesson walks through three patterns—private node schemas, shared overall schemas,
+and explicit input/output contracts—to demonstrate how LangGraph controls what data each
+node can read or publish.
+
+=== KEY INNOVATION ===
+- **Private State Hops**: Temporarily swap schemas within a node to shield sensitive keys.
+- **Selective Field Updates**: Keep a unified schema while nodes touch only the fields
+  they own.
+- **Explicit IO Contracts**: Use `input_schema` / `output_schema` to expose different
+  views externally than what internal nodes carry.
+
+=== COMPARISON WITH SINGLE-SCHEMA GRAPHS ===
+| Single Schema Workflows | Multi-Schema Control (this file) |
+|-------------------------|----------------------------------|
+| Every node sees all keys | Nodes gain scoped visibility |
+| Harder to hide internal fields | Private TypedDict snapshots enable isolation |
+| External interface matches internal shape | Input/output schemas decouple public contracts |
 
 What You'll Learn
 1. Configure LangGraph nodes that operate on different schemas within the same workflow.

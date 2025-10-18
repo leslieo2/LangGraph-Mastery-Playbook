@@ -1,4 +1,26 @@
-"""This LangGraph chatbot writes conversations and rolling summaries to SQLite so each session can pick up where the last one ended.
+"""
+External Short-Term Memory: Persisting Chats to SQLite
+
+=== PROBLEM STATEMENT ===
+In-memory checkpoints vanish once a process stops. Teams need durable storage so sessions
+can resume later, even across machines or restarts.
+
+=== CORE SOLUTION ===
+This lesson compiles a conversation+summary LangGraph and pairs it with `SqliteSaver`.
+Messages and summaries persist to SQLite, letting future runs resume context under the same
+`user_id` or `thread_id`.
+
+=== KEY INNOVATION ===
+- **Durable Checkpoints**: Replace in-memory persistence with SQLite storage.
+- **Rolling Summaries**: Combine stored history with compact summaries for long chats.
+- **Schema Awareness**: Ensure tables are created with message and summary data.
+
+=== COMPARISON WITH IN-MEMORY CHECKPOINTS ===
+| MemorySaver (RAM) | SqliteSaver (this file) |
+|-------------------|-------------------------|
+| Lost on process exit | Survives restarts and supports multiple sessions |
+| No external inspection | Queryable via SQL for debugging |
+| Limited to single process | Shareable across services when using same DB |
 
 What You'll Learn
 1. Persist LangGraph conversation state to SQLite for durable, cross-session memory.

@@ -1,4 +1,25 @@
-"""This LangGraph agent loops between an assistant LLM and arithmetic tools to execute multistep math requests with reactive routing.
+"""
+Reactive Tool Loop: Multi-Step Arithmetic Agent
+
+=== PROBLEM STATEMENT ===
+Chained tool calls require the agent to alternate between reasoning and execution. Without
+an explicit loop, it’s hard to see how LangGraph lets LLMs plan, call tools, and iterate.
+
+=== CORE SOLUTION ===
+This lesson constructs a reactive agent that cycles between an assistant node and a
+`ToolNode`, enabling the model to call multiple arithmetic tools in one conversation.
+
+=== KEY INNOVATION ===
+- **Assistant ↔ Tool Loop**: Connects nodes so tool outputs feed back into the model.
+- **Parallel Control**: Disables parallel tool calls to keep sequencing deterministic.
+- **Graph Visualization**: Saves an xray diagram to reinforce the reactive pattern.
+
+=== COMPARISON WITH STATIC TOOL ROUTING ===
+| Single Tool Call (one shot) | Reactive Loop (this file) |
+|-----------------------------|---------------------------|
+| One tool invocation per request | Multiple tool calls orchestrated by the model |
+| No iterative reasoning | Model plans, executes, and updates state repeatedly |
+| Simpler graphs | Closer to production agent behavior |
 
 What You'll Learn
 1. Build a reactive agent loop that alternates between an assistant LLM node and tool execution.

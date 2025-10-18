@@ -188,7 +188,11 @@ def _create_task_maistro_node(llm: ChatOpenAI):
         # Format memory for system prompt
         profile_text = profile[0].value if profile else "No profile stored."
         todo_text = "\n".join(str(item.value) for item in todos) or "No tasks saved."
-        instructions_text = instructions.value.get("memory", "") if instructions else "No custom instructions."
+        instructions_text = (
+            instructions.value.get("memory", "")
+            if instructions
+            else "No custom instructions."
+        )
 
         # Create system message with memory context
         system_content = SYSTEM_PROMPT.format(
@@ -238,7 +242,9 @@ def _create_profile_updater(llm: ChatOpenAI):
         messages = [SystemMessage(content=instruction), *state["messages"][:-1]]
 
         # Extract and update profile using TrustCall
-        result = profile_extractor.invoke({"messages": messages, "existing": existing_docs})
+        result = profile_extractor.invoke(
+            {"messages": messages, "existing": existing_docs}
+        )
 
         # Store updated profile
         for response, meta in zip(result["responses"], result["response_metadata"]):
@@ -247,8 +253,20 @@ def _create_profile_updater(llm: ChatOpenAI):
 
         # Return confirmation
         message = state["messages"][-1]
-        tool_call_id = message.tool_calls[0]["id"] if getattr(message, "tool_calls", None) else None
-        return {"messages": [{"role": "tool", "content": "updated profile", "tool_call_id": tool_call_id}]}
+        tool_call_id = (
+            message.tool_calls[0]["id"]
+            if getattr(message, "tool_calls", None)
+            else None
+        )
+        return {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "updated profile",
+                    "tool_call_id": tool_call_id,
+                }
+            ]
+        }
 
     return update_profile
 
@@ -285,7 +303,9 @@ def _create_todos_updater(llm: ChatOpenAI):
         messages = [SystemMessage(content=instruction), *state["messages"][:-1]]
 
         # Extract and update todos
-        result = todo_extractor.invoke({"messages": messages, "existing": existing_docs})
+        result = todo_extractor.invoke(
+            {"messages": messages, "existing": existing_docs}
+        )
 
         # Store updated todos
         for response, meta in zip(result["responses"], result["response_metadata"]):
@@ -294,8 +314,20 @@ def _create_todos_updater(llm: ChatOpenAI):
 
         # Return confirmation
         message = state["messages"][-1]
-        tool_call_id = message.tool_calls[0]["id"] if getattr(message, "tool_calls", None) else None
-        return {"messages": [{"role": "tool", "content": "updated todos", "tool_call_id": tool_call_id}]}
+        tool_call_id = (
+            message.tool_calls[0]["id"]
+            if getattr(message, "tool_calls", None)
+            else None
+        )
+        return {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "updated todos",
+                    "tool_call_id": tool_call_id,
+                }
+            ]
+        }
 
     return update_todos
 
@@ -331,7 +363,9 @@ def _create_instructions_updater(llm: ChatOpenAI):
         update_request = [
             SystemMessage(content=prompt),
             *state["messages"][:-1],
-            HumanMessage(content="Please update the instructions based on the conversation."),
+            HumanMessage(
+                content="Please update the instructions based on the conversation."
+            ),
         ]
 
         reflection = llm.invoke(update_request)
@@ -339,8 +373,20 @@ def _create_instructions_updater(llm: ChatOpenAI):
 
         # Return confirmation
         message = state["messages"][-1]
-        tool_call_id = message.tool_calls[0]["id"] if getattr(message, "tool_calls", None) else None
-        return {"messages": [{"role": "tool", "content": "updated instructions", "tool_call_id": tool_call_id}]}
+        tool_call_id = (
+            message.tool_calls[0]["id"]
+            if getattr(message, "tool_calls", None)
+            else None
+        )
+        return {
+            "messages": [
+                {
+                    "role": "tool",
+                    "content": "updated instructions",
+                    "tool_call_id": tool_call_id,
+                }
+            ]
+        }
 
     return update_instructions
 
@@ -418,10 +464,10 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
 
     # Compile and return the graph
     graph = builder.compile(store=InMemoryStore(), checkpointer=MemorySaver())
-    save_graph_image(graph, filename="artifacts/agent_with_multi_memory_coordination.png", xray=True)
+    save_graph_image(
+        graph, filename="artifacts/agent_with_multi_memory_coordination.png", xray=True
+    )
     return graph
-
-
 
 
 def main() -> None:
@@ -460,7 +506,9 @@ def main() -> None:
         pretty_print_messages(chunk["messages"][-1:], header="Follow-up conversation")
 
     print("\n=== KEY TAKEAWAY ===")
-    print("Intelligent routing enables selective memory updates based on conversation context.")
+    print(
+        "Intelligent routing enables selective memory updates based on conversation context."
+    )
     print("This is more efficient than updating all memory types every time.")
 
 

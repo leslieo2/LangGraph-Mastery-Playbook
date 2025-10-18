@@ -1,4 +1,25 @@
-"""This LangGraph mini-agent binds a chat model to a multiply tool and highlights how message history flows through a single-node tool-calling workflow.
+"""
+Single-Node Tool Call: MessagesState Warm-Up
+
+=== PROBLEM STATEMENT ===
+New LangGraph builders often wonder how chat history flows through tool-enabled models
+and how to bind Python functions as tools without constructing a large graph.
+
+=== CORE SOLUTION ===
+This lesson binds a simple multiply function to a chat model, shows how `add_messages`
+manages history, and compiles a single-node graph that routes messages through the tool.
+
+=== KEY INNOVATION ===
+- **Message Inspection**: Walk through a sample transcript with `pretty_print_messages`.
+- **Tool Binding Basics**: Demonstrate `llm.bind_tools` with a scalar multiply helper.
+- **Minimal Graph**: Compile a one-node `MessagesState` graph to highlight flow.
+
+=== COMPARISON WITH TOOL ROUTERS ===
+| Tool Router (multiple nodes) | Single Node Tool Call (this file) |
+|------------------------------|-----------------------------------|
+| Needs routing logic and ToolNode | Direct invocation via bound tools |
+| Complexity suits larger agents   | Ideal for first tool-calling experiments |
+| Harder to see raw message flow   | Focus on message history and tool result |
 
 What You'll Learn
 1. Review how LangGraph reuses existing chat messages and how `add_messages` manages history.

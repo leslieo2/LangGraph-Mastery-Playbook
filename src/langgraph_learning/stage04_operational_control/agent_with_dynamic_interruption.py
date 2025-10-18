@@ -1,4 +1,28 @@
-"""This LangGraph guardrail demo interrupts mid-run when input fails a length check, then walks through inspecting, retrying, and repairing state.
+"""
+Dynamic Interruptions: Guardrails During Execution
+
+=== PROBLEM STATEMENT ===
+Operational agents often need to halt mid-flight when live data violates safety rules.
+Without a structured pause-and-fix workflow, developers struggle to inspect state, apply
+patches, and resume the run without rerunning everything from scratch.
+
+=== CORE SOLUTION ===
+This lesson wires a three-node LangGraph where the middle step raises
+`langgraph.types.interrupt` whenever the input crosses a length threshold. The interrupt
+captures pending tasks, enabling run inspection, retries, and targeted state repairs.
+
+=== KEY INNOVATION ===
+- **Dynamic Guardrails**: Interrupts originate inside a node, not at the graph boundary.
+- **State Inspection**: Learners pull queued tasks and state snapshots before resuming.
+- **Controlled Recovery**: Demonstrates retrying with no changes, then updating state to
+  satisfy the guard and continue execution.
+
+=== COMPARISON WITH STATIC GUARDS ===
+| Static Validation (agent_with_interruption) | Dynamic Interruption (this file) |
+|--------------------------------------------|----------------------------------|
+| Rejects input before the graph starts      | Halts while the run is in progress |
+| Requires resubmitting corrected input      | Allows state patching mid-execution |
+| No view into pending tasks                 | Exposes queued nodes and memory snapshot |
 
 What You'll Learn
 1. Trigger dynamic interrupts inside LangGraph nodes using `langgraph.types.interrupt`.

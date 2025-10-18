@@ -1,4 +1,27 @@
-"""This LangGraph routing agent detects tool calls from the LLM, executes a multiply tool, and returns the augmented conversation transcript.
+"""
+Tool Routing: Detect, Execute, and Return Results
+
+=== PROBLEM STATEMENT ===
+Simple tool demos often hide how LangGraph detects model-issued tool calls and routes
+them to actual executors. Learners need a clear example that splits tool detection from
+execution.
+
+=== CORE SOLUTION ===
+This lesson binds a multiply tool to `ChatOpenAI`, uses `tools_condition` to branch into a
+`ToolNode`, and returns the updated conversation, illustrating the full detection →
+execution → resume loop.
+
+=== KEY INNOVATION ===
+- **Tool Detection**: Showcases conditional routing via `tools_condition`.
+- **Execution Node**: Leverages `ToolNode` to handle the actual multiply call.
+- **Augmented Transcript**: Returns the conversation with tool results included.
+
+=== COMPARISON WITH SINGLE-NODE TOOL CALL ===
+| Single Node Tool Call | Tool Router (this file) |
+|-----------------------|-------------------------|
+| Tool invocation happens inside the assistant node | Dedicated ToolNode executes selected tool |
+| No routing logic | `tools_condition` handles dynamic branching |
+| Simpler but less flexible | Closer to production agent architecture |
 
 What You'll Learn
 1. Configure a LangGraph workflow that detects tool calls and routes control to a tool node.

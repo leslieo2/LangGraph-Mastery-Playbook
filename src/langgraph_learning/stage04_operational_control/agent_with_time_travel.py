@@ -1,4 +1,27 @@
-"""This LangGraph arithmetic agent captures checkpoints, replays historical state, and forks new branches to explore alternate tool call paths.
+"""
+Time Travel: Replay and Fork LangGraph Runs
+
+=== PROBLEM STATEMENT ===
+When a conversation diverges, teams often need to rewind to an earlier decision point,
+inspect state, and branch into a new trajectory. Without checkpointing, the only option
+is to rerun from scratch.
+
+=== CORE SOLUTION ===
+This lesson compiles the arithmetic tool agent with `MemorySaver`, runs it once to seed
+checkpoints, then shows how to list history, replay a snapshot, and fork a new branch by
+mutating state at the saved checkpoint.
+
+=== KEY INNOVATION ===
+- **Checkpoint Enumeration**: Surface every stored snapshot along with pending nodes.
+- **Replay vs Fork**: Distinguish “read-only replay” from “fork with new inputs”.
+- **Thread Configuration**: Demonstrate how LangGraph stores `checkpoint_id` per thread.
+
+=== COMPARISON WITH BREAKPOINT APPROVAL ===
+| Breakpoint Control (agent_with_interruption) | Time Travel (this file) |
+|---------------------------------------------|-------------------------|
+| Pauses before tools to request approval      | Revisits past checkpoints after execution |
+| Focus on single linear run                   | Enables branching histories per thread |
+| No mutation of saved state                   | Allows new state to branch from a snapshot |
 
 What You'll Learn
 1. Capture checkpoints during LangGraph runs and list historical states for inspection.

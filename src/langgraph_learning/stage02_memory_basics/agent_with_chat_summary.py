@@ -1,4 +1,26 @@
-"""This LangGraph chatbot alternates between answering the user and rolling summaries so long conversations stay within token limits.
+"""
+Chat Summaries: Balancing Context Length and Memory
+
+=== PROBLEM STATEMENT ===
+Conversations grow beyond token budgets. Without summarization, agents either truncate
+context blindly or blow past limits.
+
+=== CORE SOLUTION ===
+This lesson alternates between a conversation node and a summarizer node. Older exchanges
+are distilled into a rolling summary using `MemorySaver`, keeping prompts concise while
+retaining key facts.
+
+=== KEY INNOVATION ===
+- **Summary Injection**: Prepend the latest summary before invoking the model.
+- **Reducer Cleanup**: Use `RemoveMessage` instructions to drop stale turns.
+- **Memory Persistence**: Store summaries per thread via `MemorySaver`.
+
+=== COMPARISON WITH RAW HISTORY ===
+| Raw Transcript | Summarized Flow (this file) |
+|----------------|-----------------------------|
+| Tokens grow unchecked | Summaries keep prompts under budget |
+| Hard to reason about pruning | Explicit summarizer node handles cleanup |
+| No cross-turn reinforcement | Stored summary survives across invocations |
 
 What You'll Learn
 1. Maintain long-running conversations by summarizing older context into compact memory.

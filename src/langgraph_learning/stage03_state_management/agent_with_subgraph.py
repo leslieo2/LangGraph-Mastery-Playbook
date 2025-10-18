@@ -1,5 +1,26 @@
 """
-This LangGraph agent ingests raw support chat logs, routes them through specialized sub-graphs, and returns coordinated summaries that spotlight systemic failures alongside trending customer questions.
+Sub-Graph Orchestration: Specialized Pipelines with Shared State
+
+=== PROBLEM STATEMENT ===
+Cross-functional teams often need to run distinct analyses on the same data. Without clear
+boundaries, one team’s schema changes can break another’s workflow or leak private fields.
+
+=== CORE SOLUTION ===
+This lesson assembles two specialized sub-graphs—failure analysis and question trends—
+that plug into a parent pipeline. Each sub-graph owns its schema and publishes only the
+fields the parent needs.
+
+=== KEY INNOVATION ===
+- **Schema Isolation**: Sub-graphs define their own state types to avoid accidental coupling.
+- **Selective Promotion**: Parent state overlaps on shared keys but keeps private fields local.
+- **Nested Compilation**: Demonstrates how compiled sub-graphs slot into a larger workflow.
+
+=== COMPARISON WITH MONOLITHIC GRAPHS ===
+| Single Monolithic Graph | Sub-Graph Architecture (this file) |
+|-------------------------|------------------------------------|
+| All nodes share one schema | Each team maintains its own state contract |
+| Harder to evolve subsystems | Sub-graphs can change internally without breaking parent |
+| No clear ownership lines    | Outputs explicitly promoted back to parent pipeline |
 
 What You'll Learn
 1. Split a LangGraph workflow into sub-graphs that manage their own state schemas, so each team can evolve independently without breaking shared contracts.

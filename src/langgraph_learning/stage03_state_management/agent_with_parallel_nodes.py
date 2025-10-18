@@ -1,4 +1,27 @@
-"""This LangGraph map-reduce agent generates multiple jokes in parallel from a topic and synthesizes the winning punchline with structured outputs.
+"""
+Parallel Nodes: Map-Reduce Joke Generator
+
+=== PROBLEM STATEMENT ===
+Sequential prompting can bottleneck LLM workflows: exploring alternatives one at a time
+delays feedback and makes it hard to pick the best result when work could be done in
+parallel.
+
+=== CORE SOLUTION ===
+This lesson builds a map-reduce LangGraph app that fans out joke generation across
+subjects, collects each punchline, then chooses a winner using structured outputs for
+deterministic selection.
+
+=== KEY INNOVATION ===
+- **Dynamic Fan-Out with `Send`**: Launch nodes per subject without predefining edges.
+- **Reducer Semantics**: Append jokes via list reducers as parallel nodes report in.
+- **Structured Selection**: Use `with_structured_output` to pick the best joke safely.
+
+=== COMPARISON WITH SEQUENTIAL GENERATION ===
+| Sequential Pipeline | Parallel Map-Reduce (this file) |
+|---------------------|----------------------------------|
+| Generates one joke at a time | Spawns per-subject joke generators concurrently |
+| Hard to compare candidates | Central reducer aggregates and scores jokes |
+| Manual selection via parsing | Structured schema ensures valid index selection |
 
 What You'll Learn
 1. Fan out work with `Send` to parallelize LangGraph nodes against dynamic inputs.

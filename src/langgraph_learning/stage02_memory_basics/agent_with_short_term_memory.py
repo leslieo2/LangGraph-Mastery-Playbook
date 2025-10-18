@@ -1,9 +1,31 @@
-"""This LangGraph arithmetic agent keeps checkpoints between tool calls so it can reuse previous answers when the user follows up later.
+"""
+Short-Term Memory: Checkpointing Conversational State
+
+=== PROBLEM STATEMENT ===
+Agents without memory forget previous answers, forcing users to restate context. Within a
+single session, you need a lightweight way to carry over conversation history.
 
 Memory Type: Short-term (conversation-level) memory
-- Scope: Single thread conversation context
+- Scope: Single-thread conversation context
 - Storage: MemorySaver checkpointer preserves full message history
-- Purpose: Maintain conversation continuity within a single session which shares same thread_id
+- Purpose: Maintain continuity within a session that shares the same `thread_id`
+
+=== CORE SOLUTION ===
+This lesson adds `MemorySaver` checkpoints to a reactive arithmetic agent so each call
+reuses prior messages. Follow-up prompts can reference earlier results without redoing all
+work.
+
+=== KEY INNOVATION ===
+- **Checkpoint Integration**: Compile the graph with `MemorySaver`.
+- **Thread-Aware Invocations**: Use `thread_id` to load the right history.
+- **Demonstrated Continuity**: Show that step two references step one automatically.
+
+=== COMPARISON WITH STATELESS AGENTS ===
+| Stateless Flow | Short-Term Memory (this file) |
+|----------------|-------------------------------|
+| Each call starts fresh | Checkpoints replay past exchanges |
+| Users must repeat context | Follow-up prompts reuse stored messages |
+| No notion of threads | `thread_id` ties invocations together |
 
 What You'll Learn
 1. Extend a reactive agent with checkpoints so it can remember prior turns.

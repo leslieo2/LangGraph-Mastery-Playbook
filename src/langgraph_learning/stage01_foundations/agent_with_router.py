@@ -1,4 +1,26 @@
-"""This LangGraph branching mini-agent introduces typed state, conditional routing, and graph visualization around a tiny mood selector.
+"""
+Conditional Routing: Minimal Branching State Graph
+
+=== PROBLEM STATEMENT ===
+Beginner agents need a gentle way to understand state schemas and conditional edges. A
+single linear flow hides how LangGraph makes routing choices at runtime.
+
+=== CORE SOLUTION ===
+This lesson builds a three-node graph with a `TypedDict` state and a simple branching
+decision. Learners see how to define the schema, wire conditional edges, and visualize the
+resulting flow.
+
+=== KEY INNOVATION ===
+- **Typed State Definition**: Introduce `TypedDict` for explicit schema control.
+- **Runtime Routing**: Use `add_conditional_edges` to select nodes dynamically.
+- **Graph Visualization**: Render the compiled graph to reinforce mental models.
+
+=== COMPARISON WITH LINEAR FLOWS ===
+| Linear LangGraph (single path) | Conditional Router (this file) |
+|--------------------------------|--------------------------------|
+| No runtime branching           | Randomly routes to happy/sad nodes |
+| Hard to study routing APIs     | Showcases `decide_mood` with conditional edges |
+| Same state everywhere          | Demonstrates state transformations per node |
 
 What You'll Learn
 1. Define a minimal `TypedDict` state and state transition nodes in LangGraph.

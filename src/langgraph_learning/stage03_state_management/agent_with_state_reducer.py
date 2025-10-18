@@ -1,4 +1,25 @@
-"""This LangGraph reducer sandbox demonstrates overwrite conflicts, custom list merging, and direct message manipulation inside compiled workflows.
+"""
+Reducer Semantics: Resolving State Conflicts and Merging Lists
+
+=== PROBLEM STATEMENT ===
+Parallel nodes can collide when writing to the same keys. Without understanding reducer
+rules, developers hit overwrite errors or corrupt list state.
+
+=== CORE SOLUTION ===
+This lesson builds small LangGraph sandboxes to illustrate default overwrites, branching
+conflicts, list append reducers, and direct message manipulation using `add_messages`.
+
+=== KEY INNOVATION ===
+- **Conflict Diagnostics**: Surface `InvalidUpdateError` to show what happens when branches clash.
+- **Custom Reducers**: Implement safe list merges that tolerate `None` inputs.
+- **Message Editing**: Use `add_messages` to append, overwrite, or delete conversation turns.
+
+=== COMPARISON WITH NAIVE UPDATES ===
+| Naive State Writes | Reducer-Aware Approach (this file) |
+|--------------------|------------------------------------|
+| Overwrites silently or errors late | Intentional reducers govern merges |
+| No guardrails for branches        | Conflict detection via `InvalidUpdateError` |
+| Hard to edit message history      | `add_messages` API manages structured changes |
 
 What You'll Learn
 1. Explore LangGraph's reducer semantics for overwriting, branching conflicts, and list appends.

@@ -1,4 +1,26 @@
-"""This LangGraph agent pauses before tool execution, lets operators approve or resume runs, and mirrors the flow via the hosted LangGraph SDK.
+"""
+Tool Breakpoints: Manual Approval Before Execution
+
+=== PROBLEM STATEMENT ===
+Tool-enabled agents can execute side-effecting operations. Without guardrails, they may
+call external APIs or mutate data before an operator approves the action.
+
+=== CORE SOLUTION ===
+This lesson compiles an arithmetic tool agent with `interrupt_before=['tools']`, forcing
+LangGraph to pause immediately before any tool call. Operators can inspect queued tasks,
+resume, or abort—mirroring approval workflows.
+
+=== KEY INNOVATION ===
+- **Graph-Level Breakpoints**: Pause the run before specific nodes fire.
+- **Interactive Resume**: Demonstrates both CLI prompts and programmatic resumes.
+- **Hosted Parity**: Mirrors the same approval dance through the LangGraph SDK client.
+
+=== COMPARISON WITH DYNAMIC INTERRUPTS ===
+| Dynamic Interrupts (agent_with_dynamic_interruption) | Tool Breakpoints (this file) |
+|------------------------------------------------------|------------------------------|
+| Nodes raise `interrupt` from inside execution        | Graph pauses before node execution |
+| Requires catching errors during runtime              | Pre-emptively halts tools for review |
+| Focus on repairing state mid-node                    | Focus on approving or cancelling side effects |
 
 What You'll Learn
 1. Use LangGraph breakpoints to pause execution before tool nodes for manual inspection.

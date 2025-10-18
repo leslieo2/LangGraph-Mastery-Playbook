@@ -1,4 +1,25 @@
-"""This LangGraph warm-up script verifies provider credentials, chats with an OpenAI model, and invokes a Tavily search tool to showcase the baseline stack.
+"""
+Quickstart: Verify Credentials, Chat, and Search
+
+=== PROBLEM STATEMENT ===
+Before diving into LangGraph flows, developers need a sanity check that provider keys,
+LLM access, and tooling work. Skipping this often leads to confusing failures later.
+
+=== CORE SOLUTION ===
+This quickstart script runs three smoke tests: confirm environment variables, send a chat
+message via LangChain’s `ChatOpenAI`, and invoke `TavilySearch` to fetch documents.
+
+=== KEY INNOVATION ===
+- **Environment Preflight**: Fail fast if required keys are missing.
+- **Chat Sanity Check**: Ensure the base LLM responds as expected.
+- **Tool Invocation**: Validate external search tooling before building graphs.
+
+=== COMPARISON WITH SKIPPING SANITY CHECKS ===
+| No Quickstart | Quickstart (this file) |
+|---------------|------------------------|
+| Debugging happens mid-lesson | Problems surface before building agents |
+| Hidden credential issues | Explicit `require_env` checks |
+| Tools may break unnoticed | Tavily invocation confirms dependencies |
 
 What You'll Learn
 1. Confirm the required API keys early to avoid runtime surprises.

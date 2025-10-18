@@ -1,4 +1,26 @@
-"""This LangGraph chat workflow contrasts reducer pruning, invocation-time filtering, and token trimming to control how much history the model sees.
+"""
+Message Controls: Filtering and Trimming Conversation History
+
+=== PROBLEM STATEMENT ===
+Long-running chats quickly exceed token budgets. Sending every turn wastes context
+windows, increases latency, and can leak outdated information to the model.
+
+=== CORE SOLUTION ===
+This lesson compares three LangGraph techniques for constraining history: reducer-based
+deletion, invocation-time filtering, and token-aware trimming via `trim_messages`.
+Each step prints exactly what the model sees, making trade-offs explicit.
+
+=== KEY INNOVATION ===
+- **Reducer Pruning**: Permanently drop stale messages from the graph state.
+- **Invocation Filtering**: Keep full history internally but send a narrow slice to the model.
+- **Token Trimming**: Use `trim_messages` to enforce a token window while preserving order.
+
+=== COMPARISON WITH NAIVE HISTORY ===
+| Naive Replay (send everything) | Message Control Strategies (this file) |
+|--------------------------------|----------------------------------------|
+| Bloated prompts and slow responses | Tunable context windows per node |
+| Hard to see what was removed        | Prints transcripts after each strategy |
+| No distinction between storage and invocation | Separates state retention from model inputs |
 
 What You'll Learn
 1. Compare multiple strategies for managing conversation history in LangGraph.

@@ -16,6 +16,7 @@ from langchain_core.messages import BaseMessage
 from pydantic import BaseModel
 from trustcall import create_extractor
 
+
 class ToolCallSpy:
     """Collect tool-call payloads emitted by TrustCall for debugging.
 
