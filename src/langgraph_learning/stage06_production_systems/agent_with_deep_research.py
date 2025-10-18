@@ -48,6 +48,7 @@ from typing import Annotated, Any, Iterable, Sequence
 
 from langchain_core.messages import (
     AIMessage,
+    BaseMessage,
     HumanMessage,
     SystemMessage,
     ToolMessage,
@@ -60,14 +61,13 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.types import Send
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
+from trustcall import create_extractor
 
 from src.langgraph_learning.utils import (
     create_llm,
-    create_structured_extractor,
     maybe_enable_langsmith,
     require_env,
     require_llm_provider_api_key,
-    run_structured_extractor,
     save_graph_image,
 )
 
@@ -122,6 +122,21 @@ class ResearchGraphState(TypedDict, total=False):
     content: str
     conclusion: str
     final_report: str
+
+
+def _run_structured_extractor(
+    extractor: Any,
+    messages: Sequence[BaseMessage],
+    *,
+    existing: Any | None = None,
+) -> BaseModel | None:
+    """Invoke a TrustCall extractor and return the first structured response."""
+    payload: dict[str, Any] = {"messages": list(messages)}
+    if existing is not None:
+        payload["existing"] = existing
+    result = extractor.invoke(payload)
+    responses: list[BaseModel] = result.get("responses", [])
+    return responses[0] if responses else None
 
 
 ANALYST_INSTRUCTIONS = """You are tasked with creating a set of analyst personas.
@@ -221,7 +236,9 @@ def build_interview_app(
     """Compile the interview sub-graph that powers each analyst conversation."""
     llm = create_llm(model=model, temperature=0)
     tavily_search = TavilySearch(max_results=3)
-    search_extractor = create_structured_extractor(llm, SearchQuery)
+    search_extractor = create_extractor(
+        llm, tools=[SearchQuery], tool_choice=SearchQuery.__name__
+    )
 
     def _extract_tavily_results(raw: Any) -> list[dict[str, Any]]:
         if isinstance(raw, ToolMessage):
@@ -252,7 +269,7 @@ def build_interview_app(
     def _resolve_search_query(state: InterviewState) -> str | None:
         # Reuse one TrustCall extractor for both Tavily and Wikipedia lookups so query
         # generation stays consistent no matter which retrieval tool runs next.
-        extraction = run_structured_extractor(
+        extraction = _run_structured_extractor(
             search_extractor, [SEARCH_INSTRUCTIONS, *state["messages"]]
         )
         if extraction is None:
@@ -363,7 +380,9 @@ def build_research_assistant_graph(
     interview_app = build_interview_app(
         model=model, max_interview_turns=max_interview_turns
     )
-    analyst_extractor = create_structured_extractor(llm, Perspectives)
+    analyst_extractor = create_extractor(
+        llm, tools=[Perspectives], tool_choice=Perspectives.__name__
+    )
 
     def create_analysts(state: ResearchGraphState) -> dict[str, list[Analyst]]:
         instructions = ANALYST_INSTRUCTIONS.format(
@@ -372,7 +391,7 @@ def build_research_assistant_graph(
             or "None provided.",
             max_analysts=state["max_analysts"],
         )
-        extraction = run_structured_extractor(
+        extraction = _run_structured_extractor(
             analyst_extractor,
             [
                 SystemMessage(content=instructions),

@@ -40,16 +40,11 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Iterable, Literal, Optional, Sequence, TypedDict
-
-from pydantic import BaseModel, Field
-from trustcall import create_extractor
+from typing import Literal, Optional, TypedDict
 
 from langchain_core.messages import (
-    BaseMessage,
     HumanMessage,
     SystemMessage,
-    merge_message_runs,
 )
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
@@ -57,6 +52,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.store.base import BaseStore
 from langgraph.store.memory import InMemoryStore
+from pydantic import BaseModel, Field
+from trustcall import create_extractor
 
 if __package__ in {None, ""}:
     import sys
@@ -71,12 +68,10 @@ from src.langgraph_learning.stage05_advanced_memory_systems.configuration import
 )
 from src.langgraph_learning.utils import (
     create_llm,
-    ToolCallSpy,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
     save_graph_image,
-    summarize_tool_calls,
 )
 
 

@@ -13,7 +13,7 @@ Each fact is stored independently, allowing flexible accumulation of diverse use
 - **Flexible Schema**: Simple Memory schema with just a 'content' field
 - **Multiple Storage**: Each fact stored as separate document with unique key
 - **Searchable Collection**: All memories can be retrieved and searched independently
-- **TrustCall Inserts**: Enable insertion of new memories alongside updates
+- **TrustCall Tool Choice**: `create_extractor(..., tool_choice="Memory")` locks the LLM to the Memory schema while TrustCall applies JSON Patch-style inserts/updates
 
 === COMPARISON WITH STRUCTURED PROFILES ===
 | Structured Profiles (agent_with_structured_memory.py) | Fact Collections (this file) |
@@ -25,11 +25,11 @@ Each fact is stored independently, allowing flexible accumulation of diverse use
 
 What You'll Learn
 1. Model user memories as flexible Pydantic schemas and store them as searchable collections.
-2. Invoke TrustCall to insert or update memories in parallel with structured outputs.
+2. Invoke TrustCall, which relies on LLM tool choice to guarantee schema-compliant outputs, to insert or update memories in parallel with structured outputs.
 3. Compile a LangGraph that reads existing memories, updates them, and logs the results.
 
 Lesson Flow
-1. Define the `Memory` schema and create a TrustCall extractor configured for inserts.
+1. Define the `Memory` schema and create a TrustCall extractor configured with tool choice and inserts.
 2. Build read/write nodes that render memory into prompts and persist TrustCall responses.
 3. Run scripted interactions, then iterate through the memory store to inspect saved items.
 """
@@ -38,10 +38,6 @@ from __future__ import annotations
 
 import uuid
 
-from pydantic import BaseModel, Field
-
-from trustcall import create_extractor
-
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
@@ -49,6 +45,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.store.base import BaseStore
 from langgraph.store.memory import InMemoryStore
+from pydantic import BaseModel, Field
+from trustcall import create_extractor
 
 if __package__ in {None, ""}:
     import sys
@@ -64,7 +62,6 @@ from src.langgraph_learning.stage05_advanced_memory_systems.configuration import
 from src.langgraph_learning.utils import (
     create_llm,
     maybe_enable_langsmith,
-    pretty_print_messages,
     require_llm_provider_api_key,
     save_graph_image,
 )
