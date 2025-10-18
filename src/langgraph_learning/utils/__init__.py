@@ -3,7 +3,12 @@ from .graph_viz import save_graph_image, save_png
 from .llm import create_llm, require_llm_provider_api_key
 from .messages import pretty_print_messages
 from .tools import add, divide, multiply
-from .trustcall import ToolCallSpy, summarize_tool_calls
+from .trustcall import (
+    ToolCallSpy,
+    create_structured_extractor,
+    run_structured_extractor,
+    summarize_tool_calls,
+)
 
 __all__ = [
     "create_llm",
@@ -17,5 +22,7 @@ __all__ = [
     "divide",
     "multiply",
     "ToolCallSpy",
+    "create_structured_extractor",
+    "run_structured_extractor",
     "summarize_tool_calls",
 ]

@@ -8,10 +8,13 @@ This module provides utilities for working with TrustCall extractors, including:
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
 
+from langchain_core.messages import BaseMessage
+from pydantic import BaseModel
+from trustcall import create_extractor
 
 class ToolCallSpy:
     """Collect tool-call payloads emitted by TrustCall for debugging.
@@ -63,6 +66,36 @@ class ToolChange:
 
     kind: str  # "new" or "update"
     payload: dict[str, Any]
+
+
+SchemaT = TypeVar("SchemaT", bound=BaseModel)
+
+
+def create_structured_extractor(
+    llm: Any, schema: type[SchemaT], *, tool_choice: str | None = None, **kwargs: Any
+):
+    """Create a TrustCall extractor for a single-schema structured output."""
+    return create_extractor(
+        llm,
+        tools=[schema],
+        tool_choice=tool_choice or schema.__name__,
+        **kwargs,
+    )
+
+
+def run_structured_extractor(
+    extractor: Any,
+    messages: Sequence[BaseMessage],
+    *,
+    existing: Any | None = None,
+) -> SchemaT | None:
+    """Invoke a TrustCall extractor and return the first structured response."""
+    payload: dict[str, Any] = {"messages": list(messages)}
+    if existing is not None:
+        payload["existing"] = existing
+    result = extractor.invoke(payload)
+    responses: list[SchemaT] = result.get("responses", [])
+    return responses[0] if responses else None
 
 
 def summarize_tool_calls(

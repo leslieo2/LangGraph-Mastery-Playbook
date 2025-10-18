@@ -1,5 +1,33 @@
-"""This LangGraph research assistant orchestrates analyst planning, multi-turn expert
-interviews, and report synthesis for an end-to-end retrieval workflow.
+"""
+Production Research Agent: TrustCall-Stabilised Deep Research Workflow
+
+=== PROBLEM STATEMENT ===
+Production research assistants must juggle persona planning, parallel expert interviews,
+and long-form synthesis. Traditional `llm.with_structured_output` calls can collapse under
+this complexity, producing malformed analysts or empty search queries that derail the run.
+
+=== CORE SOLUTION ===
+This lesson assembles a LangGraph that stages the entire research pipeline: generate
+analyst personas, gather evidence via multi-turn interviews, and stitch findings into a
+report. TrustCall-backed extractors guarantee reliable structured data for both analyst
+planning and search query generation, keeping the workflow resilient.
+
+=== KEY INNOVATION ===
+- **TrustCall Everywhere**: Personas and search prompts flow through TrustCall extractors,
+  avoiding brittle JSON parsing errors.
+- **Human-in-the-Loop Checkpoint**: Editors can reshape personas before interviews begin,
+  ensuring downstream work aligns with real stakeholder needs.
+- **Parallel Retrieval Interviews**: Tavily and Wikipedia searches run per analyst to
+  ground expert responses with fresh context.
+- **Report Assembly**: Memo sections, introductions, and conclusions combine into a
+  polished markdown report ready for stakeholders.
+
+=== COMPARISON WITH EARLIER STAGES ===
+| Stage 05 Memory Systems | Stage 06 Production Research |
+|-------------------------|------------------------------|
+| Focus on updating user memory with TrustCall | Focus on orchestrating an end-to-end research process |
+| Structured outputs stay within memory schemas | TrustCall guarantees persona + query stability |
+| Single-user dialogues | Multi-analyst, multi-interview workflow |
 
 What You'll Learn
 1. Nest LangGraph sub-graphs to conduct parallel, multi-turn interviews with shared tools.
@@ -35,9 +63,11 @@ from typing_extensions import TypedDict
 
 from src.langgraph_learning.utils import (
     create_llm,
+    create_structured_extractor,
     maybe_enable_langsmith,
     require_env,
     require_llm_provider_api_key,
+    run_structured_extractor,
     save_graph_image,
 )
 
@@ -191,6 +221,7 @@ def build_interview_app(
     """Compile the interview sub-graph that powers each analyst conversation."""
     llm = create_llm(model=model, temperature=0)
     tavily_search = TavilySearch(max_results=3)
+    search_extractor = create_structured_extractor(llm, SearchQuery)
 
     def _extract_tavily_results(raw: Any) -> list[dict[str, Any]]:
         if isinstance(raw, ToolMessage):
@@ -218,10 +249,22 @@ def build_interview_app(
     def _format_context(chunks: Sequence[str]) -> str:
         return "\n\n---\n\n".join(chunks)
 
+    def _resolve_search_query(state: InterviewState) -> str | None:
+        # Reuse one TrustCall extractor for both Tavily and Wikipedia lookups so query
+        # generation stays consistent no matter which retrieval tool runs next.
+        extraction = run_structured_extractor(
+            search_extractor, [SEARCH_INSTRUCTIONS, *state["messages"]]
+        )
+        if extraction is None:
+            return None
+        query = extraction.search_query
+        return query.strip() if isinstance(query, str) else None
+
     def search_with_tavily(state: InterviewState) -> dict[str, list[str]]:
-        structured_llm = llm.with_structured_output(SearchQuery)
-        search_query = structured_llm.invoke([SEARCH_INSTRUCTIONS, *state["messages"]])
-        raw_results = tavily_search.invoke(search_query.search_query)
+        query = _resolve_search_query(state)
+        if not query:
+            return {"context": []}
+        raw_results = tavily_search.invoke(query)
         results = _extract_tavily_results(raw_results)
         if not results:
             return {"context": []}
@@ -234,9 +277,10 @@ def build_interview_app(
         return {"context": [combined] if combined else []}
 
     def search_wikipedia(state: InterviewState) -> dict[str, list[str]]:
-        structured_llm = llm.with_structured_output(SearchQuery)
-        search_query = structured_llm.invoke([SEARCH_INSTRUCTIONS, *state["messages"]])
-        docs = WikipediaLoader(query=search_query.search_query, load_max_docs=2).load()
+        query = _resolve_search_query(state)
+        if not query:
+            return {"context": []}
+        docs = WikipediaLoader(query=query, load_max_docs=2).load()
         formatted = [
             f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}">\n'
             f"{doc.page_content}\n</Document>"
@@ -319,22 +363,25 @@ def build_research_assistant_graph(
     interview_app = build_interview_app(
         model=model, max_interview_turns=max_interview_turns
     )
+    analyst_extractor = create_structured_extractor(llm, Perspectives)
 
     def create_analysts(state: ResearchGraphState) -> dict[str, list[Analyst]]:
-        structured = llm.with_structured_output(Perspectives)
         instructions = ANALYST_INSTRUCTIONS.format(
             topic=state["topic"],
             human_analyst_feedback=state.get("human_analyst_feedback")
             or "None provided.",
             max_analysts=state["max_analysts"],
         )
-        analysts = structured.invoke(
+        extraction = run_structured_extractor(
+            analyst_extractor,
             [
                 SystemMessage(content=instructions),
                 HumanMessage(content="Generate the analysts."),
-            ]
+            ],
         )
-        return {"analysts": analysts.analysts}
+        if extraction is None:
+            raise ValueError("Failed to generate analyst personas via TrustCall.")
+        return {"analysts": extraction.analysts}
 
     def human_feedback(_: ResearchGraphState) -> None:
         return None
@@ -501,6 +548,9 @@ def run_demo(graph: StateGraph) -> None:
     if report:
         print("\n=== Final Research Report ===")
         print(report)
+
+    # In production you can trim or remove this demo once you're comfortable with
+    # the pipeline; it's kept inline here so learners can run the lesson quickly.
 
 
 def main() -> None:
