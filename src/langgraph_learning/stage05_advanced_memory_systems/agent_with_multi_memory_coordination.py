@@ -105,7 +105,7 @@ class ToDo(BaseModel):
     solutions: list[str] = Field(
         description="Actionable suggestions or vendors to help complete the task.",
         default_factory=list,
-        min_items=1,
+        min_length=1,
     )
     status: Literal["not started", "in progress", "done", "archived"] = Field(
         default="not started", description="Current status of the task."
@@ -159,14 +159,14 @@ Current instructions:
 """
 
 
-def _create_task_maistro_node(llm: ChatOpenAI):
-    """Create the task maistro node for processing user requests.
+def _create_task_orchestra_node(llm: ChatOpenAI):
+    """Create the task orchestra node for processing user requests.
 
     CORE TEACHING CONCEPT: This node demonstrates intelligent routing between
     multiple memory types based on conversation context.
     """
 
-    def task_maistro(state: MessagesState, config: RunnableConfig, store: BaseStore):
+    def task_orchestra(state: MessagesState, config: RunnableConfig, store: BaseStore):
         """Process user request and decide which memory to update.
 
         KEY INNOVATION: Instead of updating all memory types every time,
@@ -202,7 +202,7 @@ def _create_task_maistro_node(llm: ChatOpenAI):
         response = tool_llm.invoke([system_msg, *state["messages"]])
         return {"messages": [response]}
 
-    return task_maistro
+    return task_orchestra
 
 
 def _create_profile_updater(llm: ChatOpenAI):
@@ -425,7 +425,7 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
     conversation turns.
 
     GRAPH FLOW:
-    START → task_maistro → [conditional routing] → update_memory → task_maistro
+    START → task_orchestra → [conditional routing] → update_memory → task_orchestra
 
     KEY INNOVATION: Intelligent routing enables selective memory updates
     based on conversation context, improving efficiency.
@@ -439,7 +439,7 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
     llm = model or create_llm()
 
     # Create all node functions
-    task_maistro = _create_task_maistro_node(llm)
+    task_orchestra = _create_task_orchestra_node(llm)
     update_profile = _create_profile_updater(llm)
     update_todos = _create_todos_updater(llm)
     update_instructions = _create_instructions_updater(llm)
@@ -447,15 +447,15 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
 
     # Build the graph
     builder = StateGraph(MessagesState, config_schema=MemoryConfiguration)
-    builder.add_node("task_maistro", task_maistro)
+    builder.add_node("task_orchestra", task_orchestra)
     builder.add_node("update_profile", update_profile)
     builder.add_node("update_todos", update_todos)
     builder.add_node("update_instructions", update_instructions)
-    builder.add_edge(START, "task_maistro")
-    builder.add_conditional_edges("task_maistro", route_message)
-    builder.add_edge("update_profile", "task_maistro")
-    builder.add_edge("update_todos", "task_maistro")
-    builder.add_edge("update_instructions", "task_maistro")
+    builder.add_edge(START, "task_orchestra")
+    builder.add_conditional_edges("task_orchestra", route_message)
+    builder.add_edge("update_profile", "task_orchestra")
+    builder.add_edge("update_todos", "task_orchestra")
+    builder.add_edge("update_instructions", "task_orchestra")
 
     # Compile and return the graph
     graph = builder.compile(store=InMemoryStore(), checkpointer=MemorySaver())
