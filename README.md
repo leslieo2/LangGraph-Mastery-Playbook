@@ -39,18 +39,14 @@ The lesson also saves a graph diagram you can reference or share:
 
 ## Learning Roadmap
 
-| Stage | Focus & Flagship Lesson | Skill Gains | Est. Time |
+| Stage | Lessons Snapshot | Skill Gains | Est. Time |
 | --- | --- | --- | --- |
-| `stage01_foundations` → `quickstart` | Build your first LangGraph agent that chats and calls a Tavily search tool. | Validate credentials early, invoke chat models, and integrate third-party tools. | ~45 min |
-| `stage02_memory_basics` → `agent_with_short_term_memory` | Add conversation memory backed by checkpoints and persistence. | Configure `MemorySaver`, reuse prior turns, and checkpoint graph state between runs. | ~60 min |
-| `stage03_state_management` → `agent_with_parallel_nodes` | Fan out work with map-reduce and structured outputs. | Design typed state, parallelize nodes with `Send`, and synthesize results. | ~75 min |
-| `stage03_state_management` → `agent_with_subgraph_memory` | Compare inherited vs isolated subgraph checkpoints. | Prevent cross-agent context leakage in shared graphs. | ~45 min |
-| `stage04_operational_control` → `agent_with_interruption` | Debug and steer long-running graphs in real time. | Use breakpoints, streaming modes, history trimming, and trust-call inspection. | ~60 min |
-| `stage04_operational_control` → `agent_with_advanced_memory_management` | Automate summaries and reset short-term state safely. | Use LangMem’s `SummarizationNode`, `REMOVE_ALL_MESSAGES`, and checkpoint APIs. | ~60 min |
-| `stage05_advanced_memory_systems` → `agent_with_multi_memory_coordination` | Coordinate multiple memory types with structured extraction. | Manage user profiles, todos, and instructions with TrustCall extractors. | ~75 min |
-| `stage06_production_systems` → `agent_with_deep_research` | Ship production-ready retrieval and synthesis workflows. | Blend parallel retrievers, merge context chunks, and add production guardrails. | ~90 min |
-| `stage06_production_systems` → `agent_with_semantic_memory` | Add embedding-backed semantic recall to agent prompts. | Configure indexed stores and personalize replies from retrieved memories. | ~45 min |
-| `stage06_production_systems` → `agent_with_production_memory` | Persist checkpoints in real databases. | Swap Postgres/MongoDB/Redis savers with setup hooks and demos. | ~60 min |
+| `stage01_foundations` → `quickstart`, `agent_with_tool_call`, `agent_with_router`, `agent_with_tool_router`, `agent_with_reactive_router` | Verify credentials, bind tools, branch flows, and rehearse reactive tool loops. | Stand up `MessagesState`, detect and execute tool calls, configure conditional edges, and loop on tool replays. | ~2 hrs |
+| `stage02_memory_basics` → `agent_with_short_term_memory`, `agent_with_chat_summary`, `agent_with_external_short_term_memory` | Layer checkpoints, summarization, and SQLite persistence onto conversational agents. | Configure `MemorySaver`, orchestrate summary reducers, and swap durable storage with minimal code changes. | ~2 hrs |
+| `stage03_state_management` → `agent_with_parallel_nodes`, `agent_with_state_reducer`, `agent_with_multiple_state`, `agent_with_pydantic_schema_constrain`, `agent_with_subgraph`, `agent_with_subgraph_memory` | Master typed state, reducers, and subgraphs for larger flows. | Parallelize with `Send`, resolve reducer conflicts, scope data per node, and isolate child graph memory. | ~3 hrs |
+| `stage04_operational_control` → `agent_with_interruption`, `agent_with_validation_loop`, `agent_with_tool_approval_interrupt`, `agent_with_stream_interruption`, `agent_with_dynamic_interruption`, `agent_with_message_filter`, `agent_with_time_travel` | Practice live debugging, guardrails, and run inspection. | Inject breakpoints, build validator loops, control streaming updates, trim history, and fork prior runs. | ~3 hrs |
+| `stage05_advanced_memory_systems` → `agent_with_structured_memory`, `agent_with_fact_collection`, `agent_with_long_term_memory`, `agent_with_multi_memory_coordination` | Build multi-layer TrustCall memories and personalization flows. | Extract structured profiles, capture facts, author reflective summaries, and route requests across memories. | ~3 hrs |
+| `stage06_production_systems` → `agent_with_parallel_retrieval`, `agent_with_semantic_memory`, `agent_with_production_memory`, `agent_with_deep_research` | Ship production-ready research and retrieval pipelines. | Orchestrate parallel retrievers, blend semantic recall, configure external checkpoint backends, and run deep research workflows. | ~3 hrs |
 
 Every Python file begins with a “What You'll Learn / Lesson Flow” docstring so you can skim the topic before running it.
 
@@ -79,6 +75,8 @@ export TAVILY_API_KEY="tvly-..."      # Needed for Stage 06 production systems
 export LANGSMITH_API_KEY="ls-..."     # Optional, enables tracing in supported lessons
 ```
 
+> Stage 06's production memory demo also expects `BACKEND_KIND` (`postgres`, `mongodb`, or `redis`), a matching `BACKEND_URI`, and optional `BACKEND_INITIALIZE=true` if you want the script to create schemas on first run.
+
 ### LLM Provider Configuration
 
 To switch models/providers, just edit the `.env` file.
@@ -100,21 +98,40 @@ Each script is executable via `python -m` (uv users can also run `uv run ...`):
 # Stage 01 examples
 python -m src.langgraph_learning.stage01_foundations.quickstart
 python -m src.langgraph_learning.stage01_foundations.agent_with_tool_call
+python -m src.langgraph_learning.stage01_foundations.agent_with_router
+python -m src.langgraph_learning.stage01_foundations.agent_with_tool_router
+python -m src.langgraph_learning.stage01_foundations.agent_with_reactive_router
 
 # Stage 02 memory basics
 python -m src.langgraph_learning.stage02_memory_basics.agent_with_short_term_memory
+python -m src.langgraph_learning.stage02_memory_basics.agent_with_chat_summary
+python -m src.langgraph_learning.stage02_memory_basics.agent_with_external_short_term_memory
 
 # Stage 03 state management
+python -m src.langgraph_learning.stage03_state_management.agent_with_parallel_nodes
+python -m src.langgraph_learning.stage03_state_management.agent_with_state_reducer
+python -m src.langgraph_learning.stage03_state_management.agent_with_multiple_state
+python -m src.langgraph_learning.stage03_state_management.agent_with_pydantic_schema_constrain
+python -m src.langgraph_learning.stage03_state_management.agent_with_subgraph
 python -m src.langgraph_learning.stage03_state_management.agent_with_subgraph_memory
 
 # Stage 04 operational control
 python -m src.langgraph_learning.stage04_operational_control.agent_with_interruption
-python -m src.langgraph_learning.stage04_operational_control.agent_with_advanced_memory_management
+python -m src.langgraph_learning.stage04_operational_control.agent_with_validation_loop
+python -m src.langgraph_learning.stage04_operational_control.agent_with_tool_approval_interrupt
+python -m src.langgraph_learning.stage04_operational_control.agent_with_stream_interruption
+python -m src.langgraph_learning.stage04_operational_control.agent_with_dynamic_interruption
+python -m src.langgraph_learning.stage04_operational_control.agent_with_message_filter
+python -m src.langgraph_learning.stage04_operational_control.agent_with_time_travel
 
 # Stage 05 advanced memory systems
+python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_structured_memory
+python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_fact_collection
+python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_long_term_memory
 python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_multi_memory_coordination
 
 # Stage 06 production systems
+python -m src.langgraph_learning.stage06_production_systems.agent_with_parallel_retrieval
 python -m src.langgraph_learning.stage06_production_systems.agent_with_semantic_memory
 python -m src.langgraph_learning.stage06_production_systems.agent_with_production_memory
 python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research

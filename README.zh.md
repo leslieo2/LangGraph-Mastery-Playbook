@@ -42,18 +42,14 @@ uv run python -m src.langgraph_learning.stage06_production_systems.agent_with_de
 
 ## 学习路线
 
-| Stage | 焦点 & 代表课程 | 核心收获 | 预计用时 |
+| Stage | 课程速览 | 核心收获 | 预计用时 |
 | --- | --- | --- | --- |
-| `stage01_foundations` → `quickstart` | 构建会聊天并调用 Tavily 搜索工具的首个 LangGraph agent。 | 提前验证凭证、调用聊天模型、集成第三方工具。 | ~45 分钟 |
-| `stage02_memory_basics` → `agent_with_short_term_memory` | 为对话代理加入带持久化的检查点记忆。 | 配置 `MemorySaver`、续写历史对话、在运行间保存图状态。 | ~60 分钟 |
-| `stage03_state_management` → `agent_with_parallel_nodes` | 使用 Map-Reduce 并行生成并结构化整理答案。 | 设计类型化状态、借助 `Send` 并行节点、综合多路输出。 | ~75 分钟 |
-| `stage03_state_management` → `agent_with_subgraph_memory` | 对比继承与隔离的子图记忆。 | 阻止多代理共享线程时的上下文串扰。 | ~45 分钟 |
-| `stage04_operational_control` → `agent_with_interruption` | 实时调试并掌控长流程图。 | 运用断点、流式模式、历史裁剪与 TrustCall 检视。 | ~60 分钟 |
-| `stage04_operational_control` → `agent_with_advanced_memory_management` | 自动总结并安全重置短期记忆。 | 使用 LangMem `SummarizationNode`、`REMOVE_ALL_MESSAGES` 与检查点 API。 | ~60 分钟 |
-| `stage05_advanced_memory_systems` → `agent_with_multi_memory_coordination` | 协调多类型记忆系统与结构化提取。 | 管理用户档案、待办事项和指令，使用 TrustCall 提取器。 | ~75 分钟 |
-| `stage06_production_systems` → `agent_with_deep_research` | 交付生产级检索与综合工作流。 | 并联检索器、合并上下文片段、添加上线防护。 | ~90 分钟 |
-| `stage06_production_systems` → `agent_with_semantic_memory` | 为对话加入语义召回。 | 配置带向量索引的存储，并用检索记忆个性化回复。 | ~45 分钟 |
-| `stage06_production_systems` → `agent_with_production_memory` | 将检查点持久化到真实数据库。 | 切换 Postgres/MongoDB/Redis Saver，并演示初始化流程。 | ~60 分钟 |
+| `stage01_foundations` → `quickstart`、`agent_with_tool_call`、`agent_with_router`、`agent_with_tool_router`、`agent_with_reactive_router` | 验证凭证、绑定工具、设计分支流程，并练习响应式工具循环。 | 搭建 `MessagesState`、检测并执行工具调用、配置条件边、循环处理多轮工具回放。 | ~2 小时 |
+| `stage02_memory_basics` → `agent_with_short_term_memory`、`agent_with_chat_summary`、`agent_with_external_short_term_memory` | 为对话代理叠加检查点、摘要与 SQLite 持久化。 | 配置 `MemorySaver`、组织摘要 reducer、在不改动核心逻辑的前提下切换持久化存储。 | ~2 小时 |
+| `stage03_state_management` → `agent_with_parallel_nodes`、`agent_with_state_reducer`、`agent_with_multiple_state`、`agent_with_pydantic_schema_constrain`、`agent_with_subgraph`、`agent_with_subgraph_memory` | 掌握大型流程里的类型化状态、Reducer 与子图。 | 借助 `Send` 并行化、化解 Reducer 冲突、按节点隔离状态、为子图独立记忆。 | ~3 小时 |
+| `stage04_operational_control` → `agent_with_interruption`、`agent_with_validation_loop`、`agent_with_tool_approval_interrupt`、`agent_with_stream_interruption`、`agent_with_dynamic_interruption`、`agent_with_message_filter`、`agent_with_time_travel` | 演练联机调试、风控与运行记录排查。 | 注入断点、构建校验循环、掌控流式输出、裁剪历史、从过去运行分叉。 | ~3 小时 |
+| `stage05_advanced_memory_systems` → `agent_with_structured_memory`、`agent_with_fact_collection`、`agent_with_long_term_memory`、`agent_with_multi_memory_coordination` | 构建多层 TrustCall 记忆与个性化流程。 | 抽取结构化档案、采集事实、撰写反思摘要、在多记忆间智能路由。 | ~3 小时 |
+| `stage06_production_systems` → `agent_with_parallel_retrieval`、`agent_with_semantic_memory`、`agent_with_production_memory`、`agent_with_deep_research` | 交付生产级检索与研究流水线。 | 并联检索器、融合语义召回、配置外部检查点后端、运行深度研究工作流。 | ~3 小时 |
 
 每个 Python 文件开头都有 “What You'll Learn / Lesson Flow” 的文档字符串，运行前即可快速了解内容。
 
@@ -81,6 +77,8 @@ export TAVILY_API_KEY="tvly-..."      # Stage 06 生产系统示例需要
 export LANGSMITH_API_KEY="ls-..."     # 可选，启用支持课程的链路追踪
 ```
 
+> Stage 06 的生产级记忆课程还需要设置 `BACKEND_KIND`（`postgres`、`mongodb` 或 `redis`）、对应的 `BACKEND_URI`，以及在首次初始化时可选的 `BACKEND_INITIALIZE=true`。
+
 ### LLM 模型 / 供应商配置
 
 要更换模型或供应商，只需要修改仓库根目录的 `.env` 文件。
@@ -102,21 +100,40 @@ OPENROUTER_TEMPERATURE=0.2
 # Stage 01 示例
 python -m src.langgraph_learning.stage01_foundations.quickstart
 python -m src.langgraph_learning.stage01_foundations.agent_with_tool_call
+python -m src.langgraph_learning.stage01_foundations.agent_with_router
+python -m src.langgraph_learning.stage01_foundations.agent_with_tool_router
+python -m src.langgraph_learning.stage01_foundations.agent_with_reactive_router
 
 # Stage 02 记忆基础
 python -m src.langgraph_learning.stage02_memory_basics.agent_with_short_term_memory
+python -m src.langgraph_learning.stage02_memory_basics.agent_with_chat_summary
+python -m src.langgraph_learning.stage02_memory_basics.agent_with_external_short_term_memory
 
 # Stage 03 状态管理
+python -m src.langgraph_learning.stage03_state_management.agent_with_parallel_nodes
+python -m src.langgraph_learning.stage03_state_management.agent_with_state_reducer
+python -m src.langgraph_learning.stage03_state_management.agent_with_multiple_state
+python -m src.langgraph_learning.stage03_state_management.agent_with_pydantic_schema_constrain
+python -m src.langgraph_learning.stage03_state_management.agent_with_subgraph
 python -m src.langgraph_learning.stage03_state_management.agent_with_subgraph_memory
 
 # Stage 04 操作控制
 python -m src.langgraph_learning.stage04_operational_control.agent_with_interruption
-python -m src.langgraph_learning.stage04_operational_control.agent_with_advanced_memory_management
+python -m src.langgraph_learning.stage04_operational_control.agent_with_validation_loop
+python -m src.langgraph_learning.stage04_operational_control.agent_with_tool_approval_interrupt
+python -m src.langgraph_learning.stage04_operational_control.agent_with_stream_interruption
+python -m src.langgraph_learning.stage04_operational_control.agent_with_dynamic_interruption
+python -m src.langgraph_learning.stage04_operational_control.agent_with_message_filter
+python -m src.langgraph_learning.stage04_operational_control.agent_with_time_travel
 
 # Stage 05 高级记忆系统
+python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_structured_memory
+python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_fact_collection
+python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_long_term_memory
 python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_multi_memory_coordination
 
 # Stage 06 生产系统
+python -m src.langgraph_learning.stage06_production_systems.agent_with_parallel_retrieval
 python -m src.langgraph_learning.stage06_production_systems.agent_with_semantic_memory
 python -m src.langgraph_learning.stage06_production_systems.agent_with_production_memory
 python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research
