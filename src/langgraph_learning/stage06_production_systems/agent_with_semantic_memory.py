@@ -59,13 +59,18 @@ from src.langgraph_learning.utils import (
 )
 
 
-def create_semantic_store(model_name: str = "openai:text-embedding-3-small") -> InMemoryStore:
-    """Create an embedding-backed store suitable for semantic recall."""
+def create_semantic_store(
+    model_name: str = "openai:text-embedding-3-small",
+) -> InMemoryStore:
+    """Create an embedding-backed store suitable for semantic recall.
+
+    Note: `init_embeddings` only succeeds when the configured provider is OpenAI.
+    """
     embeddings = init_embeddings(model_name)
     return InMemoryStore(
         index={
             "embed": embeddings,
-            "dims": embeddings.dimensions,
+            "dims": 1536,
         }
     )
 
@@ -119,7 +124,9 @@ def build_semantic_graph(store: InMemoryStore):
 
 def run_demo(graph, prompts: Iterable[str]) -> None:
     """Stream a scripted conversation that triggers memory writes."""
-    config = {"configurable": {"thread_id": "semantic-thread", "user_id": "semantic-user"}}
+    config = {
+        "configurable": {"thread_id": "semantic-thread", "user_id": "semantic-user"}
+    }
     for text in prompts:
         events = graph.stream(
             {"messages": [HumanMessage(content=text)]},
@@ -148,4 +155,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

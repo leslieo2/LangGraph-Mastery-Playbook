@@ -60,7 +60,9 @@ def build_agent_subgraph(isolated: bool):
 
     def analyst(state: MessagesState, config: RunnableConfig):
         agent_id = config["configurable"]["agent_id"]
-        history = "\n".join(msg.content for msg in state["messages"]) or "No history yet."
+        history = (
+            "\n".join(msg.content for msg in state["messages"]) or "No history yet."
+        )
         prompt = f"You are agent {agent_id}. Conversation history:\n{history}"
         response = llm.invoke([HumanMessage(content=prompt)])
         return {"messages": [AIMessage(content=response.content)]}
@@ -71,9 +73,7 @@ def build_agent_subgraph(isolated: bool):
     sub_builder.add_edge("analyst", END)
 
     compiled = (
-        sub_builder.compile(checkpointer=True)
-        if isolated
-        else sub_builder.compile()
+        sub_builder.compile(checkpointer=True) if isolated else sub_builder.compile()
     )
     save_graph_image(
         compiled,
@@ -146,4 +146,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

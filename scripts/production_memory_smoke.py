@@ -15,10 +15,8 @@ from __future__ import annotations
 
 import os
 import sys
-from contextlib import suppress
-from typing import Iterable
-
 from pathlib import Path
+from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
