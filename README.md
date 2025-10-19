@@ -17,10 +17,10 @@
 
 ## Quickstart Demo
 
-Run the Stage 03 map-reduce lesson to see LangGraph parallelism and structured outputs in action:
+Run the Stage 06 deep research lesson to see LangGraph parallelism and structured outputs in action:
 
 ```bash
-uv run python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_deep_research
+uv run python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research
 ```
 
 Example output:

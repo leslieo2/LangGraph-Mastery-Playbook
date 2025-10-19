@@ -35,8 +35,12 @@ def save_png(png_bytes: bytes, filename: str | Path = "graph.png") -> Path:
 
 def save_graph_image(
     app: _AppLike, filename: str | Path = "graph.png", *, xray: bool = False
-) -> Path:
-    """Render a compiled LangGraph app to a PNG file."""
+) -> Path | None:
+    """Render a compiled LangGraph app to a PNG file; fall back gracefully offline."""
     graph = app.get_graph(xray=xray)
-    png_bytes = graph.draw_mermaid_png()
+    try:
+        png_bytes = graph.draw_mermaid_png()
+    except ValueError as exc:  # Mermaid service may be unavailable in offline runs.
+        print(f"Skipping graph image generation: {exc}")
+        return None
     return save_png(png_bytes, filename)

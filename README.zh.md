@@ -17,10 +17,10 @@
 
 ## 快速体验
 
-试试 Stage 03 的 Map-Reduce 课程，感受 LangGraph 的并行处理和结构化输出：
+试试 Stage 06 的 deep research 课程，感受 LangGraph 的并行处理和结构化输出：
 
 ```bash
-uv run python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_deep_research
+uv run python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research
 ```
 
 示例输出：

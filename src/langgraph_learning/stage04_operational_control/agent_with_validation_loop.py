@@ -71,10 +71,7 @@ def build_validation_graph():
     builder.add_edge("collect_age", END)
 
     graph = builder.compile(checkpointer=MemorySaver())
-    try:
-        save_graph_image(graph, filename="artifacts/agent_with_validation_loop.png")
-    except ValueError as exc:  # Mermaid service may be unavailable in offline runs.
-        print(f"Skipping graph image generation: {exc}")
+    save_graph_image(graph, filename="artifacts/agent_with_validation_loop.png")
     return graph
 
 
