@@ -44,9 +44,13 @@ The lesson also saves a graph diagram you can reference or share:
 | `stage01_foundations` → `quickstart` | Build your first LangGraph agent that chats and calls a Tavily search tool. | Validate credentials early, invoke chat models, and integrate third-party tools. | ~45 min |
 | `stage02_memory_basics` → `agent_with_short_term_memory` | Add conversation memory backed by checkpoints and persistence. | Configure `MemorySaver`, reuse prior turns, and checkpoint graph state between runs. | ~60 min |
 | `stage03_state_management` → `agent_with_parallel_nodes` | Fan out work with map-reduce and structured outputs. | Design typed state, parallelize nodes with `Send`, and synthesize results. | ~75 min |
+| `stage03_state_management` → `agent_with_subgraph_memory` | Compare inherited vs isolated subgraph checkpoints. | Prevent cross-agent context leakage in shared graphs. | ~45 min |
 | `stage04_operational_control` → `agent_with_interruption` | Debug and steer long-running graphs in real time. | Use breakpoints, streaming modes, history trimming, and trust-call inspection. | ~60 min |
+| `stage04_operational_control` → `agent_with_advanced_memory_management` | Automate summaries and reset short-term state safely. | Use LangMem’s `SummarizationNode`, `REMOVE_ALL_MESSAGES`, and checkpoint APIs. | ~60 min |
 | `stage05_advanced_memory_systems` → `agent_with_multi_memory_coordination` | Coordinate multiple memory types with structured extraction. | Manage user profiles, todos, and instructions with TrustCall extractors. | ~75 min |
 | `stage06_production_systems` → `agent_with_deep_research` | Ship production-ready retrieval and synthesis workflows. | Blend parallel retrievers, merge context chunks, and add production guardrails. | ~90 min |
+| `stage06_production_systems` → `agent_with_semantic_memory` | Add embedding-backed semantic recall to agent prompts. | Configure indexed stores and personalize replies from retrieved memories. | ~45 min |
+| `stage06_production_systems` → `agent_with_production_memory` | Persist checkpoints in real databases. | Swap Postgres/MongoDB/Redis savers with setup hooks and demos. | ~60 min |
 
 Every Python file begins with a “What You'll Learn / Lesson Flow” docstring so you can skim the topic before running it.
 
@@ -100,13 +104,19 @@ python -m src.langgraph_learning.stage01_foundations.agent_with_tool_call
 # Stage 02 memory basics
 python -m src.langgraph_learning.stage02_memory_basics.agent_with_short_term_memory
 
+# Stage 03 state management
+python -m src.langgraph_learning.stage03_state_management.agent_with_subgraph_memory
+
 # Stage 04 operational control
 python -m src.langgraph_learning.stage04_operational_control.agent_with_interruption
+python -m src.langgraph_learning.stage04_operational_control.agent_with_advanced_memory_management
 
 # Stage 05 advanced memory systems
 python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_multi_memory_coordination
 
 # Stage 06 production systems
+python -m src.langgraph_learning.stage06_production_systems.agent_with_semantic_memory
+python -m src.langgraph_learning.stage06_production_systems.agent_with_production_memory
 python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research
 ```
 
@@ -128,6 +138,33 @@ If you prefer notebooks, you can still adapt these scripts into notebooks, but t
 - Add a docstring summary to any new lesson so it aligns with the staged curriculum.
 
 Happy agent building! 🎯
+
+## Optional Dependencies & Smoke Tests
+
+Some production-grade lessons require extra packages:
+
+- `langgraph-checkpoint-postgres`
+- `langgraph-checkpoint-mongodb`
+- `langgraph-checkpoint-redis`
+- `langmem`
+
+Install them as needed, for example:
+
+```bash
+uv pip install langgraph-checkpoint-postgres langgraph-checkpoint-mongodb \
+  langgraph-checkpoint-redis langmem
+```
+
+Once your databases are available, run the smoke harness to verify connections:
+
+```bash
+POSTGRES_URI=postgresql://... \
+MONGODB_URI=mongodb://... \
+REDIS_URI=redis://... \
+uv run python scripts/production_memory_smoke.py
+```
+
+The script prints which backends connected successfully and surfaces any issues before exercising the lesson modules.
 
 ## Acknowledgements
 

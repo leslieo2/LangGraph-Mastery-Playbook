@@ -47,9 +47,13 @@ uv run python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_wi
 | `stage01_foundations` → `quickstart` | 构建会聊天并调用 Tavily 搜索工具的首个 LangGraph agent。 | 提前验证凭证、调用聊天模型、集成第三方工具。 | ~45 分钟 |
 | `stage02_memory_basics` → `agent_with_short_term_memory` | 为对话代理加入带持久化的检查点记忆。 | 配置 `MemorySaver`、续写历史对话、在运行间保存图状态。 | ~60 分钟 |
 | `stage03_state_management` → `agent_with_parallel_nodes` | 使用 Map-Reduce 并行生成并结构化整理答案。 | 设计类型化状态、借助 `Send` 并行节点、综合多路输出。 | ~75 分钟 |
+| `stage03_state_management` → `agent_with_subgraph_memory` | 对比继承与隔离的子图记忆。 | 阻止多代理共享线程时的上下文串扰。 | ~45 分钟 |
 | `stage04_operational_control` → `agent_with_interruption` | 实时调试并掌控长流程图。 | 运用断点、流式模式、历史裁剪与 TrustCall 检视。 | ~60 分钟 |
+| `stage04_operational_control` → `agent_with_advanced_memory_management` | 自动总结并安全重置短期记忆。 | 使用 LangMem `SummarizationNode`、`REMOVE_ALL_MESSAGES` 与检查点 API。 | ~60 分钟 |
 | `stage05_advanced_memory_systems` → `agent_with_multi_memory_coordination` | 协调多类型记忆系统与结构化提取。 | 管理用户档案、待办事项和指令，使用 TrustCall 提取器。 | ~75 分钟 |
 | `stage06_production_systems` → `agent_with_deep_research` | 交付生产级检索与综合工作流。 | 并联检索器、合并上下文片段、添加上线防护。 | ~90 分钟 |
+| `stage06_production_systems` → `agent_with_semantic_memory` | 为对话加入语义召回。 | 配置带向量索引的存储，并用检索记忆个性化回复。 | ~45 分钟 |
+| `stage06_production_systems` → `agent_with_production_memory` | 将检查点持久化到真实数据库。 | 切换 Postgres/MongoDB/Redis Saver，并演示初始化流程。 | ~60 分钟 |
 
 每个 Python 文件开头都有 “What You'll Learn / Lesson Flow” 的文档字符串，运行前即可快速了解内容。
 
@@ -102,13 +106,19 @@ python -m src.langgraph_learning.stage01_foundations.agent_with_tool_call
 # Stage 02 记忆基础
 python -m src.langgraph_learning.stage02_memory_basics.agent_with_short_term_memory
 
+# Stage 03 状态管理
+python -m src.langgraph_learning.stage03_state_management.agent_with_subgraph_memory
+
 # Stage 04 操作控制
 python -m src.langgraph_learning.stage04_operational_control.agent_with_interruption
+python -m src.langgraph_learning.stage04_operational_control.agent_with_advanced_memory_management
 
 # Stage 05 高级记忆系统
 python -m src.langgraph_learning.stage05_advanced_memory_systems.agent_with_multi_memory_coordination
 
 # Stage 06 生产系统
+python -m src.langgraph_learning.stage06_production_systems.agent_with_semantic_memory
+python -m src.langgraph_learning.stage06_production_systems.agent_with_production_memory
 python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research
 ```
 
@@ -136,3 +146,30 @@ python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_rese
 
 - 本项目的结构和许多课程思路，灵感来自出色的 [Intro to LangGraph](https://academy.langchain.com/courses/take/intro-to-langgraph) 课程。
 - 官方的 [LangChain + LangGraph 文档](https://docs.langchain.com/) 是跟随脚本学习时不可或缺的参考资料。
+
+## 可选依赖与冒烟测试
+
+部分生产级课程需要额外安装以下包：
+
+- `langgraph-checkpoint-postgres`
+- `langgraph-checkpoint-mongodb`
+- `langgraph-checkpoint-redis`
+- `langmem`
+
+可以按需安装，例如：
+
+```bash
+uv pip install langgraph-checkpoint-postgres langgraph-checkpoint-mongodb \
+  langgraph-checkpoint-redis langmem
+```
+
+准备好数据库后，运行冒烟脚本验证连接：
+
+```bash
+POSTGRES_URI=postgresql://... \
+MONGODB_URI=mongodb://... \
+REDIS_URI=redis://... \
+uv run python scripts/production_memory_smoke.py
+```
+
+脚本会打印已成功建立连接的后端，并在失败时给出排查提示。
