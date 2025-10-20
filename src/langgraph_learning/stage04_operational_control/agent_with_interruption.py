@@ -40,13 +40,15 @@ import os
 from uuid import uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
-    create_llm,
     add,
+    create_llm,
+    llm_from_config,
     divide,
     maybe_enable_langsmith,
     multiply,
@@ -68,31 +70,40 @@ class State(MessagesState):
     ...
 
 
-def build_tool_agent_graph_with_breakpoint():
-    tools = [add, multiply, divide]
+TOOLS = [add, multiply, divide]
+SYSTEM_MESSAGE = SystemMessage(
+    content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
+)
 
-    llm = create_llm()
-    llm_with_tools = llm.bind_tools(tools)
 
-    sys_msg = SystemMessage(
-        content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
-    )
+def _assemble_tool_agent_graph(
+    llm, memory: MemorySaver, *, interrupt_before: list[str]
+):
+    """Return compiled tool agent graph using supplied dependencies."""
+    llm_with_tools = llm.bind_tools(TOOLS)
 
     def assistant(state: MessagesState):
-        return {"messages": [llm_with_tools.invoke([sys_msg, *state["messages"]])]}
+        return {
+            "messages": [llm_with_tools.invoke([SYSTEM_MESSAGE, *state["messages"]])]
+        }
 
     builder = StateGraph(MessagesState)
     builder.add_node("assistant", assistant)
-    builder.add_node("tools", ToolNode(tools))
+    builder.add_node("tools", ToolNode(TOOLS))
     builder.add_edge(START, "assistant")
     builder.add_conditional_edges("assistant", tools_condition)
     builder.add_edge("tools", "assistant")
 
-    memory = MemorySaver()
-    graph = builder.compile(
-        interrupt_before=["tools"],
+    return builder.compile(
+        interrupt_before=interrupt_before,
         checkpointer=memory,
     )
+
+
+def build_tool_agent_graph_with_breakpoint():
+    llm = create_llm()
+    memory = MemorySaver()
+    graph = _assemble_tool_agent_graph(llm, memory, interrupt_before=["tools"])
 
     save_graph_image(graph, filename="artifacts/agent_with_interruption.png", xray=True)
     return graph
@@ -144,3 +155,15 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the breakpoint-enabled tool agent."""
+    llm, overrides = llm_from_config(config)
+    interrupt_before = overrides.get("interrupt_before") or ["tools"]
+    memory = MemorySaver()
+    return _assemble_tool_agent_graph(
+        llm,
+        memory,
+        interrupt_before=list(interrupt_before),
+    )

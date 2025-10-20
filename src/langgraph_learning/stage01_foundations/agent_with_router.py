@@ -38,6 +38,7 @@ from __future__ import annotations
 import random
 from typing import Literal
 
+from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END, START
 from langgraph.graph import StateGraph
 from typing_extensions import TypedDict
@@ -104,3 +105,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for conditional routing demo."""
+    return build_graph()

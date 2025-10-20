@@ -48,11 +48,14 @@ from typing import Any, Callable, Iterator, Protocol
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.store.base import BaseStore
+from langgraph.store.memory import InMemoryStore
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -166,9 +169,8 @@ BACKENDS: dict[str, Backend] = {
 }
 
 
-def build_personalization_graph(store: BaseStore, saver: Any):
-    """Compile a graph that personalizes responses and writes bullet memories."""
-    llm = create_llm()
+def _assemble_personalization_graph(llm, store: BaseStore, saver: Any):
+    """Return personalization graph compiled with supplied dependencies."""
 
     def call_model(state: MessagesState, config: RunnableConfig, *, store: BaseStore):
         cfg = config["configurable"]
@@ -197,7 +199,18 @@ def build_personalization_graph(store: BaseStore, saver: Any):
     builder.add_edge("assistant", "write_memory")
     builder.add_edge("write_memory", END)
 
-    graph = builder.compile(store=store, checkpointer=saver)
+    return builder.compile(store=store, checkpointer=saver)
+
+
+def build_personalization_graph(
+    store: BaseStore,
+    saver: Any,
+    *,
+    llm_model=None,
+):
+    """Compile a graph that personalizes responses and writes bullet memories."""
+    llm = llm_model or create_llm()
+    graph = _assemble_personalization_graph(llm, store, saver)
     save_graph_image(graph, filename="artifacts/agent_with_production_memory.png")
     return graph
 
@@ -251,6 +264,14 @@ def main() -> None:
     with backend.sync_factory(uri, initialize) as (store, saver):
         graph = build_personalization_graph(store, saver)
         run_demo(graph)
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the production memory lesson."""
+    llm, _ = llm_from_config(config)
+    store = InMemoryStore()
+    saver = MemorySaver()
+    return _assemble_personalization_graph(llm, store, saver)
 
 
 if __name__ == "__main__":

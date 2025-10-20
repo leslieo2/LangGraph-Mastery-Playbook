@@ -39,13 +39,15 @@ from __future__ import annotations
 from uuid import uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
-    create_llm,
     add,
+    create_llm,
+    llm_from_config,
     divide,
     maybe_enable_langsmith,
     multiply,
@@ -54,28 +56,35 @@ from src.langgraph_learning.utils import (
 )
 
 
-def build_time_travel_graph():
-    """Assemble the arithmetic agent and enable checkpointing."""
+TOOLS = [add, multiply, divide]
+SYSTEM_MESSAGE = SystemMessage(
+    content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
+)
 
-    tools = [add, multiply, divide]
-    llm = create_llm()
-    llm_with_tools = llm.bind_tools(tools)
-    sys_msg = SystemMessage(
-        content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
-    )
+
+def _assemble_time_travel_graph(llm, memory: MemorySaver):
+    """Return compiled time-travel graph using provided dependencies."""
+    llm_with_tools = llm.bind_tools(TOOLS)
 
     def assistant(state: MessagesState):
         """Call the tool-enabled model with system prompt + conversation history."""
-        return {"messages": [llm_with_tools.invoke([sys_msg, *state["messages"]])]}
+        return {
+            "messages": [llm_with_tools.invoke([SYSTEM_MESSAGE, *state["messages"]])]
+        }
 
     builder = StateGraph(MessagesState)
     builder.add_node("assistant", assistant)
-    builder.add_node("tools", ToolNode(tools))
+    builder.add_node("tools", ToolNode(TOOLS))
     builder.add_edge(START, "assistant")
     builder.add_conditional_edges("assistant", tools_condition)
     builder.add_edge("tools", "assistant")
 
-    graph = builder.compile(checkpointer=MemorySaver())
+    return builder.compile(checkpointer=memory)
+
+
+def build_time_travel_graph():
+    """Assemble the arithmetic agent and enable checkpointing."""
+    graph = _assemble_time_travel_graph(create_llm(), MemorySaver())
     save_graph_image(graph, filename="artifacts/agent_with_time_travel.png", xray=True)
     return graph
 
@@ -211,3 +220,10 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the time-travel demo."""
+    llm, _ = llm_from_config(config)
+    memory = MemorySaver()
+    return _assemble_time_travel_graph(llm, memory)

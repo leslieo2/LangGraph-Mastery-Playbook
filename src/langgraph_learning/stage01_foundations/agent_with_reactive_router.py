@@ -35,11 +35,13 @@ Lesson Flow
 from __future__ import annotations
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     add,
     divide,
     multiply,
@@ -49,25 +51,34 @@ from src.langgraph_learning.utils import (
 )
 
 
-def build_agent_graph(model: str | None = None):
-    """Compile a reactive graph that routes between an assistant node and tools."""
-    tools = [add, multiply, divide]
-    llm = create_llm(model=model)
-    llm_with_tools = llm.bind_tools(tools, parallel_tool_calls=False)
-    sys_msg = SystemMessage(
-        content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
-    )
+TOOLS = [add, multiply, divide]
+SYSTEM_MESSAGE = SystemMessage(
+    content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
+)
+
+
+def _assemble_reactive_tool_graph(llm):
+    """Return compiled reactive agent graph using provided LLM."""
+    llm_with_tools = llm.bind_tools(TOOLS, parallel_tool_calls=False)
 
     def assistant(state: MessagesState):
-        return {"messages": [llm_with_tools.invoke([sys_msg] + state["messages"])]}
+        return {
+            "messages": [llm_with_tools.invoke([SYSTEM_MESSAGE] + state["messages"])]
+        }
 
     graph = StateGraph(MessagesState)
     graph.add_node("assistant", assistant)
-    graph.add_node("tools", ToolNode(tools))
+    graph.add_node("tools", ToolNode(TOOLS))
     graph.add_edge(START, "assistant")
     graph.add_conditional_edges("assistant", tools_condition)
     graph.add_edge("tools", "assistant")
     return graph.compile()
+
+
+def build_agent_graph(*, model: str | None = None):
+    """Compile a reactive graph that routes between an assistant node and tools."""
+    llm = create_llm(model=model)
+    return _assemble_reactive_tool_graph(llm)
 
 
 def run_demo(app) -> None:
@@ -92,3 +103,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the reactive router graph."""
+    llm, _ = llm_from_config(config)
+    return _assemble_reactive_tool_graph(llm)

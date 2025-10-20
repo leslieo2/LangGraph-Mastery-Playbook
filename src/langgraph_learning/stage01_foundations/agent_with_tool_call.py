@@ -38,11 +38,13 @@ from __future__ import annotations
 from typing import Sequence
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END, START
 from langgraph.graph import MessagesState, StateGraph, add_messages
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     multiply,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -94,9 +96,8 @@ def inspect_add_messages() -> None:
     print("\nCombined messages:", result)
 
 
-def build_tool_calling_app(model: str | None = None):
-    """Create a compiled graph that routes messages through the LLM."""
-    llm = create_llm(model=model)
+def _assemble_tool_calling_graph(llm):
+    """Return the compiled tool-calling graph given a prepared LLM."""
     llm_with_tools = llm.bind_tools([multiply])
 
     def llm_node(state: MessagesState):
@@ -108,6 +109,19 @@ def build_tool_calling_app(model: str | None = None):
     graph.add_edge(START, "tool_calling_llm")
     graph.add_edge("tool_calling_llm", END)
     return graph.compile()
+
+
+def build_tool_calling_app(*, model: str | None = None):
+    """Create a compiled graph that routes messages through the LLM."""
+    llm = create_llm(model=model)
+    return _assemble_tool_calling_graph(llm)
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point that reuses optional config overrides."""
+
+    llm, _ = llm_from_config(config)
+    return _assemble_tool_calling_graph(llm)
 
 
 def run_app_demo(app) -> None:

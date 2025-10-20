@@ -43,12 +43,14 @@ from langchain_core.messages import (
     RemoveMessage,
     SystemMessage,
 )
+from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -60,9 +62,8 @@ class State(MessagesState):
     summary: str
 
 
-def build_chatbot_graph(model: ChatOpenAI):
-    """Create a chatbot that summarizes older context into rolling memory."""
-    memory = MemorySaver()
+def _assemble_chat_summary_graph(model: ChatOpenAI, memory: MemorySaver):
+    """Return compiled chatbot graph with supplied model and memory."""
 
     def conversation(state: State):
         summary = state.get("summary", "")
@@ -101,7 +102,12 @@ def build_chatbot_graph(model: ChatOpenAI):
     workflow.add_conditional_edges("conversation", should_summary)
     workflow.add_edge("summarize_conversation", END)
 
-    graph = workflow.compile(checkpointer=memory)
+    return workflow.compile(checkpointer=memory)
+
+
+def build_chatbot_graph(model: ChatOpenAI):
+    """Create a chatbot that summarizes older context into rolling memory."""
+    graph = _assemble_chat_summary_graph(model, MemorySaver())
     save_graph_image(graph, filename="artifacts/agent_with_chat_summary.png")
     return graph
 
@@ -145,3 +151,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the chat summary agent."""
+    llm, _ = llm_from_config(config)
+    return _assemble_chat_summary_graph(llm, MemorySaver())

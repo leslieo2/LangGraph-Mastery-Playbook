@@ -42,11 +42,13 @@ from typing import Annotated
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     require_llm_provider_api_key,
     save_graph_image,
@@ -83,9 +85,8 @@ class JokeState(TypedDict):
     subject: str
 
 
-def build_map_reduce_app(model: str | None = None):
-    """Compile the joke map-reduce LangGraph app."""
-    llm = create_llm(model=model, temperature=0)
+def _assemble_map_reduce_app(llm):
+    """Return compiled map-reduce app using provided LLM."""
     subjects_chain = llm.with_structured_output(Subjects)
     joke_chain = llm.with_structured_output(Joke)
     best_chain = llm.with_structured_output(BestJoke)
@@ -134,6 +135,12 @@ def build_map_reduce_app(model: str | None = None):
     return builder.compile()
 
 
+def build_map_reduce_app(*, model: str | None = None):
+    """Compile the joke map-reduce LangGraph app."""
+    llm = create_llm(model=model, temperature=0)
+    return _assemble_map_reduce_app(llm)
+
+
 def stream_demo(app, topic: str = "animals") -> None:
     """Stream the map-reduce execution for the provided topic."""
     print(f"\n=== Map-Reduce Demo: {topic} ===")
@@ -155,3 +162,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the map-reduce demo."""
+    llm, _ = llm_from_config(config, default_temperature=0)
+    return _assemble_map_reduce_app(llm)

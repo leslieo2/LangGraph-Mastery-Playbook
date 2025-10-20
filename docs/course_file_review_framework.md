@@ -18,6 +18,7 @@ Reusable checklist for refreshing course files so documentation and code stay al
 
 ## 3. Verify Code Supports the Teaching Story
 - Confirm each major function maps directly to a lesson step (e.g., persona creation, memory updates, synthesis).
+- Ensure the module exports a `studio_graph` (or equivalent) entry point that routes through shared helpers. For LLM-powered lessons, prefer `llm_from_config(config)` so Studio overrides like `provider`, `model`, `temperature`, `api_key`, and `base_url` work consistently.
 - Check for any dead code, unused imports, or unrelated utilities that might distract learners.
 - Add concise comments only when a non-obvious teaching point needs emphasis.
 

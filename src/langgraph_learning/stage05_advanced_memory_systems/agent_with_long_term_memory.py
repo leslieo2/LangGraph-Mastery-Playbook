@@ -60,6 +60,7 @@ from src.langgraph_learning.stage05_advanced_memory_systems.configuration import
 )
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -86,9 +87,15 @@ Only include factual information stated by the user. Do not make assumptions.
 Update the user information based on the chat history below:"""
 
 
-def build_memory_graph(model: ChatOpenAI | None = None):
-    """Compile a graph that reflects on conversations and stores user memory."""
-    llm = model or create_llm()
+def _assemble_memory_graph(
+    llm: ChatOpenAI,
+    *,
+    store: BaseStore | None = None,
+    checkpointer: MemorySaver | None = None,
+):
+    """Return compiled long-term memory graph using supplied dependencies."""
+    store = store or InMemoryStore()
+    checkpointer = checkpointer or MemorySaver()
 
     def _config(config: RunnableConfig) -> MemoryConfiguration:
         return MemoryConfiguration.from_runnable_config(config)
@@ -125,11 +132,22 @@ def build_memory_graph(model: ChatOpenAI | None = None):
     builder.add_edge("call_model", "write_memory")
     builder.add_edge("write_memory", END)
 
-    # Long-term (cross-thread) memory and short-term checkpoints.
-    long_term_memory = InMemoryStore()
-    checkpointer = MemorySaver()
+    return builder.compile(store=store, checkpointer=checkpointer)
 
-    graph = builder.compile(store=long_term_memory, checkpointer=checkpointer)
+
+def build_memory_graph(
+    model: ChatOpenAI | None = None,
+    *,
+    store: BaseStore | None = None,
+    checkpointer: MemorySaver | None = None,
+):
+    """Compile a graph that reflects on conversations and stores user memory."""
+    llm = model or create_llm()
+    graph = _assemble_memory_graph(
+        llm,
+        store=store,
+        checkpointer=checkpointer,
+    )
     save_graph_image(
         graph, filename="artifacts/agent_with_long_term_memory.png", xray=True
     )
@@ -161,3 +179,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the long-term memory agent."""
+    llm, _ = llm_from_config(config)
+    return _assemble_memory_graph(llm)

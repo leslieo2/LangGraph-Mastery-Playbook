@@ -43,16 +43,29 @@ from langchain_core.messages import (
     RemoveMessage,
     trim_messages,
 )
+from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
     save_graph_image,
 )
+
+
+def _build_basic_messages_graph(llm: ChatOpenAI):
+    def chat_model_node(state: MessagesState):
+        return {"messages": llm.invoke(state["messages"])}
+
+    builder = StateGraph(MessagesState)
+    builder.add_node("chat_model", chat_model_node)
+    builder.add_edge(START, "chat_model")
+    builder.add_edge("chat_model", END)
+    return builder.compile()
 
 
 def demonstrate_basic_messages(llm: ChatOpenAI):
@@ -64,15 +77,7 @@ def demonstrate_basic_messages(llm: ChatOpenAI):
         ),
     ]
     pretty_print_messages(messages, header="Starting messages")
-
-    def chat_model_node(state: MessagesState):
-        return {"messages": llm.invoke(state["messages"])}
-
-    builder = StateGraph(MessagesState)
-    builder.add_node("chat_model", chat_model_node)
-    builder.add_edge(START, "chat_model")
-    builder.add_edge("chat_model", END)
-    graph = builder.compile()
+    graph = _build_basic_messages_graph(llm)
     output = graph.invoke({"messages": messages})
     pretty_print_messages(output["messages"], header="Model response")
     return messages, output
@@ -94,10 +99,16 @@ def demonstrate_filter_with_reducer(
         ),
     ]
 
+    graph = _build_reducer_graph(llm)
+
+    save_graph_image(graph, filename="artifacts/agent_with_message_reduce_filter.png")
+    output = graph.invoke({"messages": messages})
+    pretty_print_messages(output["messages"], header="After reducer filtering")
+    return messages, output
+
+
+def _build_reducer_graph(llm: ChatOpenAI):
     def filter_messages(state: MessagesState):
-        # Remove everything except the most recent two messages; this permanently
-        # shrinks the conversation state, so later nodes never see the discarded
-        # history.
         delete_messages = [RemoveMessage(id=msg.id) for msg in state["messages"][:-2]]
         return {"messages": delete_messages}
 
@@ -110,12 +121,18 @@ def demonstrate_filter_with_reducer(
     builder.add_edge(START, "filter")
     builder.add_edge("filter", "chat_model")
     builder.add_edge("chat_model", END)
-    graph = builder.compile()
+    return builder.compile()
 
-    save_graph_image(graph, filename="artifacts/agent_with_message_reduce_filter.png")
-    output = graph.invoke({"messages": messages})
-    pretty_print_messages(output["messages"], header="After reducer filtering")
-    return messages, output
+
+def _build_filtered_invocation_graph(llm: ChatOpenAI):
+    def chat_model_node(state: MessagesState):
+        return {"messages": [llm.invoke(state["messages"][-1:])]}
+
+    builder = StateGraph(MessagesState)
+    builder.add_node("chat_model", chat_model_node)
+    builder.add_edge(START, "chat_model")
+    builder.add_edge("chat_model", END)
+    return builder.compile()
 
 
 def demonstrate_message_filtering(
@@ -128,19 +145,7 @@ def demonstrate_message_filtering(
     messages.append(HumanMessage("Tell me more about Narwhals!", name="Leslie"))
 
     pretty_print_messages(messages, header="Conversation before filtering")
-
-    def chat_model_node(state: MessagesState):
-        # Only the final message is sent to the model, but the conversation state
-        # itself remains untouched—useful when you want lightweight prompts without
-        # losing history for logging or future logic.
-        return {"messages": [llm.invoke(state["messages"][-1:])]}
-
-    builder = StateGraph(MessagesState)
-    builder.add_node("chat_model", chat_model_node)
-    builder.add_edge(START, "chat_model")
-    builder.add_edge("chat_model", END)
-    graph = builder.compile()
-
+    graph = _build_filtered_invocation_graph(llm)
     output = graph.invoke({"messages": messages})
     pretty_print_messages(output["messages"], header="Filtered invocation result")
     return messages, output
@@ -179,16 +184,30 @@ def demonstrate_trim_messages(
         )
         return {"messages": [llm.invoke(trimmed)]}
 
-    builder = StateGraph(MessagesState)
-    builder.add_node("chat_model", chat_model_node)
-    builder.add_edge(START, "chat_model")
-    builder.add_edge("chat_model", END)
-    graph = builder.compile()
+    graph = _build_trim_messages_graph(llm)
 
     save_graph_image(graph, filename="artifacts/agent_with_message_trim.png")
     output = graph.invoke({"messages": messages})
     pretty_print_messages(output["messages"], header="Trimming invocation result")
     return output
+
+
+def _build_trim_messages_graph(llm: ChatOpenAI):
+    def chat_model_node(state: MessagesState):
+        trimmed = trim_messages(
+            state["messages"],
+            max_tokens=100,
+            strategy="last",
+            token_counter=llm,
+            allow_partial=False,
+        )
+        return {"messages": [llm.invoke(trimmed)]}
+
+    builder = StateGraph(MessagesState)
+    builder.add_node("chat_model", chat_model_node)
+    builder.add_edge(START, "chat_model")
+    builder.add_edge("chat_model", END)
+    return builder.compile()
 
 
 def main() -> None:
@@ -206,3 +225,16 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for message filtering strategies."""
+    llm, overrides = llm_from_config(config)
+    mode = overrides.get("mode")
+    if mode == "reduce":
+        return _build_reducer_graph(llm)
+    if mode == "filter":
+        return _build_filtered_invocation_graph(llm)
+    if mode == "trim":
+        return _build_trim_messages_graph(llm)
+    return _build_basic_messages_graph(llm)

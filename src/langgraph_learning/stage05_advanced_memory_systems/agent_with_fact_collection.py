@@ -61,6 +61,7 @@ from src.langgraph_learning.stage05_advanced_memory_systems.configuration import
 )
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     require_llm_provider_api_key,
     save_graph_image,
@@ -181,6 +182,30 @@ def _create_update_facts_node(llm: ChatOpenAI):
     return update_facts
 
 
+def _assemble_fact_collection_graph(
+    llm: ChatOpenAI,
+    *,
+    store: BaseStore | None = None,
+    checkpointer: MemorySaver | None = None,
+):
+    store = store or InMemoryStore()
+    checkpointer = checkpointer or MemorySaver()
+
+    # Create node functions
+    read_facts = _create_read_facts_node(llm)
+    update_facts = _create_update_facts_node(llm)
+
+    # Build the graph
+    builder = StateGraph(MessagesState, config_schema=MemoryConfiguration)
+    builder.add_node("read_facts", read_facts)
+    builder.add_node("update_facts", update_facts)
+    builder.add_edge(START, "read_facts")
+    builder.add_edge("read_facts", "update_facts")
+    builder.add_edge("update_facts", END)
+
+    return builder.compile(store=store, checkpointer=checkpointer)
+
+
 def build_agent_with_fact_collection(model: ChatOpenAI | None = None):
     """Compile a graph that stores multiple user facts via TrustCall.
 
@@ -200,20 +225,9 @@ def build_agent_with_fact_collection(model: ChatOpenAI | None = None):
         Compiled LangGraph with fact collection capabilities
     """
     llm = model or create_llm()
-
-    # Create node functions
-    read_facts = _create_read_facts_node(llm)
-    update_facts = _create_update_facts_node(llm)
-
-    # Build the graph
-    builder = StateGraph(MessagesState, config_schema=MemoryConfiguration)
-    builder.add_node("read_facts", read_facts)
-    builder.add_node("update_facts", update_facts)
-    builder.add_edge(START, "read_facts")
-    builder.add_edge("read_facts", "update_facts")
-    builder.add_edge("update_facts", END)
-
-    graph = builder.compile(store=InMemoryStore(), checkpointer=MemorySaver())
+    graph = _assemble_fact_collection_graph(
+        llm, store=InMemoryStore(), checkpointer=MemorySaver()
+    )
     save_graph_image(
         graph, filename="artifacts/agent_with_fact_collection.png", xray=True
     )
@@ -278,3 +292,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the fact collection lesson."""
+    llm, _ = llm_from_config(config)
+    return _assemble_fact_collection_graph(llm)

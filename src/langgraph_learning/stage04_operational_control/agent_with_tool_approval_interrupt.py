@@ -41,6 +41,7 @@ from uuid import uuid4
 
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -49,6 +50,7 @@ from langgraph.types import Command, interrupt
 from src.langgraph_learning.utils import (
     add,
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     multiply,
     require_llm_provider_api_key,
@@ -79,34 +81,38 @@ def transfer_funds(amount: float, recipient: str):
     )
 
 
-def build_tool_interrupt_graph():
-    """Assemble a tool-enabled assistant whose tool halts for approval."""
-
-    tools = [transfer_funds, add, multiply]
-    llm = create_llm()
-    llm_with_tools = llm.bind_tools(tools)
-
-    system_prompt = SystemMessage(
-        content=(
-            "You are a financial assistant. Use tools to perform safe transfers when asked."
-        )
+TOOLS = [transfer_funds, add, multiply]
+SYSTEM_PROMPT = SystemMessage(
+    content=(
+        "You are a financial assistant. Use tools to perform safe transfers when asked."
     )
+)
+
+
+def _assemble_tool_interrupt_graph(llm, memory: MemorySaver):
+    """Return compiled tool-interrupt graph using provided dependencies."""
+    llm_with_tools = llm.bind_tools(TOOLS)
 
     def assistant(state: MessagesState):
         """Call the LLM with accumulated messages plus a system safety prompt."""
-        messages = [system_prompt, *state["messages"]]
+        messages = [SYSTEM_PROMPT, *state["messages"]]
         response = llm_with_tools.invoke(messages)
         return {"messages": [response]}
 
     builder = StateGraph(MessagesState)
     builder.add_node("assistant", assistant)
-    builder.add_node("tools", ToolNode(tools))
+    builder.add_node("tools", ToolNode(TOOLS))
     builder.add_edge(START, "assistant")
     builder.add_conditional_edges("assistant", tools_condition)
     builder.add_edge("tools", "assistant")
     builder.add_edge("assistant", END)
 
-    graph = builder.compile(checkpointer=MemorySaver())
+    return builder.compile(checkpointer=memory)
+
+
+def build_tool_interrupt_graph():
+    """Assemble a tool-enabled assistant whose tool halts for approval."""
+    graph = _assemble_tool_interrupt_graph(create_llm(), MemorySaver())
     save_graph_image(graph, filename="artifacts/agent_with_tool_approval_interrupt.png")
     return graph
 
@@ -174,3 +180,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the tool approval interrupt demo."""
+    llm, _ = llm_from_config(config)
+    return _assemble_tool_interrupt_graph(llm, MemorySaver())

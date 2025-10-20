@@ -68,6 +68,7 @@ from src.langgraph_learning.stage05_advanced_memory_systems.configuration import
 )
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -417,7 +418,12 @@ def _create_router():
     return route_message
 
 
-def build_trustcall_agent(model: ChatOpenAI | None = None):
+def _assemble_trustcall_agent(
+    llm: ChatOpenAI,
+    *,
+    store: BaseStore | None = None,
+    checkpointer: MemorySaver | None = None,
+):
     """Compile a multi-memory LangGraph agent powered by TrustCall.
 
     This agent coordinates multiple memory types (profile, todos, instructions)
@@ -436,14 +442,15 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
     Returns:
         Compiled LangGraph agent with memory management capabilities.
     """
-    llm = model or create_llm()
-
     # Create all node functions
     task_orchestra = _create_task_orchestra_node(llm)
     update_profile = _create_profile_updater(llm)
     update_todos = _create_todos_updater(llm)
     update_instructions = _create_instructions_updater(llm)
     route_message = _create_router()
+
+    store = store or InMemoryStore()
+    checkpointer = checkpointer or MemorySaver()
 
     # Build the graph
     builder = StateGraph(MessagesState, config_schema=MemoryConfiguration)
@@ -458,7 +465,12 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
     builder.add_edge("update_instructions", "task_orchestra")
 
     # Compile and return the graph
-    graph = builder.compile(store=InMemoryStore(), checkpointer=MemorySaver())
+    return builder.compile(store=store, checkpointer=checkpointer)
+
+
+def build_trustcall_agent(model: ChatOpenAI | None = None):
+    llm = model or create_llm()
+    graph = _assemble_trustcall_agent(llm)
     save_graph_image(
         graph, filename="artifacts/agent_with_multi_memory_coordination.png", xray=True
     )
@@ -509,3 +521,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the multi-memory coordination agent."""
+    llm, _ = llm_from_config(config)
+    return _assemble_trustcall_agent(llm)

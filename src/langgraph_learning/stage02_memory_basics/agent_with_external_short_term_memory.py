@@ -45,12 +45,14 @@ from langchain_core.messages import (
     RemoveMessage,
     SystemMessage,
 )
+from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -62,10 +64,15 @@ class State(MessagesState):
     summary: str
 
 
-def build_chatbot_graph(model: ChatOpenAI, db_path: Path) -> StateGraph:
-    """Create a chatbot that persists conversation state to SQLite."""
+def _create_sqlite_saver(db_path: Path) -> SqliteSaver:
+    """Return a SQLite-backed saver for the provided path."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path, check_same_thread=False)
+    return SqliteSaver(conn)
+
+
+def _assemble_external_memory_graph(model: ChatOpenAI, saver: SqliteSaver):
+    """Return compiled chatbot graph using supplied model and saver."""
 
     def conversation(state: State):
         summary = state.get("summary", "")
@@ -104,8 +111,13 @@ def build_chatbot_graph(model: ChatOpenAI, db_path: Path) -> StateGraph:
     workflow.add_conditional_edges("conversation", should_summary)
     workflow.add_edge("summarize_conversation", END)
 
-    memory = SqliteSaver(conn)
-    graph = workflow.compile(checkpointer=memory)
+    return workflow.compile(checkpointer=saver)
+
+
+def build_chatbot_graph(model: ChatOpenAI, db_path: Path) -> StateGraph:
+    """Create a chatbot that persists conversation state to SQLite."""
+    saver = _create_sqlite_saver(db_path)
+    graph = _assemble_external_memory_graph(model, saver)
     save_graph_image(
         graph, filename="artifacts/agent_with_external_short_term_memory.png"
     )
@@ -152,3 +164,12 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the external memory chatbot."""
+    llm, overrides = llm_from_config(config)
+    db_path_raw = overrides.get("db_path", "artifacts/chatbot.db")
+    db_path = Path(db_path_raw)
+    saver = _create_sqlite_saver(db_path)
+    return _assemble_external_memory_graph(llm, saver)

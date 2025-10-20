@@ -44,10 +44,12 @@ from typing_extensions import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from langchain_core.runnables import RunnableConfig
+
 from src.langgraph_learning.utils import save_graph_image
 
 
-def demonstrate_private_state() -> None:
+def _build_private_state_graph():
     class OverallState(TypedDict):
         foo: int
 
@@ -69,13 +71,16 @@ def demonstrate_private_state() -> None:
     builder.add_edge(START, "node_1")
     builder.add_edge("node_1", "node_2")
     builder.add_edge("node_2", END)
-    graph = builder.compile()
+    return builder.compile()
 
+
+def demonstrate_private_state() -> None:
+    graph = _build_private_state_graph()
     save_graph_image(graph, filename="artifacts/private_state.png")
     print("Result:", graph.invoke({"foo": 1}))
 
 
-def demonstrate_single_schema_io() -> None:
+def _build_single_schema_graph():
     # Demonstrates a graph where the same overall schema is used for input, internal
     # updates, and output—nodes update only the fields they care about, but all keys
     # remain visible at the graph boundary.
@@ -98,13 +103,16 @@ def demonstrate_single_schema_io() -> None:
     builder.add_edge(START, "thinking_node")
     builder.add_edge("thinking_node", "answer_node")
     builder.add_edge("answer_node", END)
-    graph = builder.compile()
+    return builder.compile()
 
+
+def demonstrate_single_schema_io() -> None:
+    graph = _build_single_schema_graph()
     save_graph_image(graph, filename="artifacts/single_schema_io.png")
     print("Result:", graph.invoke({"question": "hi"}))
 
 
-def demonstrate_explicit_io_schemas() -> None:
+def _build_explicit_io_graph():
     # Demonstrates how to keep internal state rich while constraining the public
     # interface via dedicated input and output schemas.
     class InputState(TypedDict):
@@ -134,8 +142,11 @@ def demonstrate_explicit_io_schemas() -> None:
     builder.add_edge(START, "thinking_node")
     builder.add_edge("thinking_node", "answer_node")
     builder.add_edge("answer_node", END)
-    graph = builder.compile()
+    return builder.compile()
 
+
+def demonstrate_explicit_io_schemas() -> None:
+    graph = _build_explicit_io_graph()
     save_graph_image(graph, filename="artifacts/agent_with_multiple_state.png")
     print("Result:", graph.invoke({"question": "hi"}))
 
@@ -148,3 +159,14 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for exploring multiple state schema patterns."""
+    variant = (config or {}).get("configurable", {}).get("variant") if config else None
+    if variant == "private":
+        return _build_private_state_graph()
+    if variant == "single":
+        return _build_single_schema_graph()
+    # Default to explicit IO schema example.
+    return _build_explicit_io_graph()

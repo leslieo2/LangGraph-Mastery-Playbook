@@ -40,6 +40,7 @@ from typing import Annotated, Dict
 from typing_extensions import TypedDict
 
 from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.errors import InvalidUpdateError
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
@@ -66,12 +67,12 @@ def reduce_list(left: list[int] | None, right: list[int] | None) -> list[int]:
     return left + right
 
 
-def render_graph(graph, filename: str) -> None:
+def _render_graph(graph, filename: str) -> None:
     """Persist the PNG for the compiled graph."""
     save_graph_image(graph, filename=filename)
 
 
-def demonstrate_default_overwrite() -> None:
+def _build_default_overwrite_graph():
     def node_increment(state: OverwriteState) -> Dict[str, int]:
         print("---Node increment---")
         return {"foo": state["foo"] + 1}
@@ -80,13 +81,17 @@ def demonstrate_default_overwrite() -> None:
     builder.add_node("node_increment", node_increment)
     builder.add_edge(START, "node_increment")
     builder.add_edge("node_increment", END)
-    graph = builder.compile()
+    return builder.compile()
 
+
+def demonstrate_default_overwrite() -> None:
+    graph = _build_default_overwrite_graph()
+    _render_graph(graph, filename="artifacts/reducer_default_overwrite.png")
     result = graph.invoke({"foo": 1})
     print("Result:", result)
 
 
-def demonstrate_branching_conflict() -> None:
+def _build_branching_conflict_graph():
     def node_1(state: BranchingState) -> Dict[str, int]:
         print("---Node 1---")
         return {"foo": state["foo"] + 1}
@@ -108,15 +113,19 @@ def demonstrate_branching_conflict() -> None:
     builder.add_edge("node_1", "node_3")
     builder.add_edge("node_2", END)
     builder.add_edge("node_3", END)
-    graph = builder.compile()
+    return builder.compile()
 
+
+def demonstrate_branching_conflict() -> None:
+    graph = _build_branching_conflict_graph()
+    _render_graph(graph, filename="artifacts/reducer_branching_conflict.png")
     try:
         print(graph.invoke({"foo": 1}))
     except InvalidUpdateError as exc:
         print("InvalidUpdateError occurred:", exc)
 
 
-def demonstrate_reducer_append() -> None:
+def _build_reducer_append_graph():
     def node_1(state: AppendReducerState) -> Dict[str, list[int]]:
         print("---Node 1---")
         return {"foo": [state["foo"][-1] + 1]}
@@ -138,8 +147,12 @@ def demonstrate_reducer_append() -> None:
     builder.add_edge("node_1", "node_3")
     builder.add_edge("node_2", END)
     builder.add_edge("node_3", END)
-    graph = builder.compile()
+    return builder.compile()
 
+
+def demonstrate_reducer_append() -> None:
+    graph = _build_reducer_append_graph()
+    _render_graph(graph, filename="artifacts/reducer_append.png")
     print(graph.invoke({"foo": [1]}))
     try:
         graph.invoke({"foo": None})  # type: ignore[arg-type]
@@ -155,3 +168,13 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for reducer semantics demo."""
+    variant = (config or {}).get("configurable", {}).get("variant") if config else None
+    if variant == "branching":
+        return _build_branching_conflict_graph()
+    if variant == "append":
+        return _build_reducer_append_graph()
+    return _build_default_overwrite_graph()

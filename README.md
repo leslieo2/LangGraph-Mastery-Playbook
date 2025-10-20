@@ -52,6 +52,9 @@ Every Python file begins with a “What You'll Learn / Lesson Flow” docstring 
 
 ## Getting Started
 
+<details>
+<summary><b>📋 Setup Instructions (Click to expand)</b></summary>
+
 We use [uv](https://docs.astral.sh/uv/) for dependency management; it can still export a traditional
 `requirements.txt` when needed.
 
@@ -90,7 +93,10 @@ OPENROUTER_MODEL=anthropic/claude-3-haiku
 OPENROUTER_TEMPERATURE=0.2
 ```
 
-### Running Lessons
+</details>
+
+<details>
+<summary><b>🚀 Running Lessons (Click to expand)</b></summary>
 
 Each script is executable via `python -m` (uv users can also run `uv run ...`):
 
@@ -137,7 +143,9 @@ python -m src.langgraph_learning.stage06_production_systems.agent_with_productio
 python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_research
 ```
 
-Most lessons generate a graph visualization (PNG) inside the module’s `artifacts/` directory. Streaming lessons print incremental updates; debugging lessons may prompt for manual approval.
+Most lessons generate a graph visualization (PNG) inside the module's `artifacts/` directory. Streaming lessons print incremental updates; debugging lessons may prompt for manual approval.
+
+</details>
 
 ## Comparing to Notebook-Heavy Tutorials
 
@@ -156,7 +164,18 @@ If you prefer notebooks, you can still adapt these scripts into notebooks, but t
 
 Happy agent building! 🎯
 
-## Optional Dependencies & Smoke Tests
+## LangGraph Studio Integration
+
+All agents in this playbook are available in **LangGraph Studio** for visual debugging, testing, and deployment. See [STUDIO_SETUP.md](STUDIO_SETUP.md) for detailed setup instructions.
+
+**Quick Start:**
+```bash
+langgraph dev
+```
+Then open: `https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024`
+
+<details>
+<summary><b>🔧 Optional Dependencies & Smoke Tests (Click to expand)</b></summary>
 
 Some production-grade lessons require extra packages:
 
@@ -182,6 +201,8 @@ uv run python scripts/production_memory_smoke.py
 ```
 
 The script prints which backends connected successfully and surfaces any issues before exercising the lesson modules.
+
+</details>
 
 ## Acknowledgements
 

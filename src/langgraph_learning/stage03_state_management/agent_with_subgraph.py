@@ -38,6 +38,7 @@ from __future__ import annotations
 import operator
 from typing import Annotated, Iterable
 
+from langchain_core.runnables import RunnableConfig
 from typing_extensions import TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -231,3 +232,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the subgraph orchestration demo."""
+    return build_entry_app()

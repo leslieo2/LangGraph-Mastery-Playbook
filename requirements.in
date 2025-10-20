@@ -3,6 +3,7 @@ langchain-core
 langchain-openai
 httpx[socks]
 langgraph
+langgraph-cli[inmem]
 langchain-tavily
 trustcall
 python-dotenv

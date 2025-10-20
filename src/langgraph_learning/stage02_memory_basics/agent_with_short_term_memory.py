@@ -41,13 +41,15 @@ Lesson Flow
 from __future__ import annotations
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
-    create_llm,
     add,
+    create_llm,
+    llm_from_config,
     divide,
     multiply,
     pretty_print_messages,
@@ -56,28 +58,36 @@ from src.langgraph_learning.utils import (
 )
 
 
-def build_agent_graph(model: str | None = None):
-    """Compile a reactive agent that remembers prior exchanges."""
-    tools = [add, multiply, divide]
-    llm = create_llm(model=model)
-    llm_with_tools = llm.bind_tools(tools, parallel_tool_calls=False)
+TOOLS = [add, multiply, divide]
+SYSTEM_MESSAGE = SystemMessage(
+    content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
+)
 
-    sys_msg = SystemMessage(
-        content="You are a helpful assistant tasked with performing arithmetic on a set of inputs."
-    )
+
+def _assemble_short_term_memory_graph(llm, memory: MemorySaver):
+    """Return a compiled short-term memory graph using provided dependencies."""
+    llm_with_tools = llm.bind_tools(TOOLS, parallel_tool_calls=False)
 
     def assistant(state: MessagesState):
-        return {"messages": [llm_with_tools.invoke([sys_msg] + state["messages"])]}
+        return {
+            "messages": [llm_with_tools.invoke([SYSTEM_MESSAGE] + state["messages"])]
+        }
 
     graph = StateGraph(MessagesState)
     graph.add_node("assistant", assistant)
-    graph.add_node("tools", ToolNode(tools))
+    graph.add_node("tools", ToolNode(TOOLS))
     graph.add_edge(START, "assistant")
     graph.add_conditional_edges("assistant", tools_condition)
     graph.add_edge("tools", "assistant")
 
-    memory = MemorySaver()
     return graph.compile(checkpointer=memory)
+
+
+def build_agent_graph(*, model: str | None = None):
+    """Compile a reactive agent that remembers prior exchanges."""
+    llm = create_llm(model=model)
+    memory = MemorySaver()
+    return _assemble_short_term_memory_graph(llm, memory)
 
 
 def run_demo(app) -> None:
@@ -104,3 +114,10 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the short-term memory agent."""
+    llm, _ = llm_from_config(config)
+    memory = MemorySaver()
+    return _assemble_short_term_memory_graph(llm, memory)

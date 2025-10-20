@@ -48,15 +48,15 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     pretty_print_messages,
     require_llm_provider_api_key,
     save_graph_image,
 )
 
 
-def build_agent_subgraph(isolated: bool):
-    """Compile a subgraph that replays prior turns for its assigned agent."""
-    llm = create_llm()
+def _assemble_agent_subgraph(llm, isolated: bool):
+    """Return compiled agent subgraph for the given isolation mode."""
 
     def analyst(state: MessagesState, config: RunnableConfig):
         agent_id = config["configurable"]["agent_id"]
@@ -75,6 +75,13 @@ def build_agent_subgraph(isolated: bool):
     compiled = (
         sub_builder.compile(checkpointer=True) if isolated else sub_builder.compile()
     )
+    return compiled
+
+
+def build_agent_subgraph(isolated: bool, llm=None):
+    """Compile a subgraph that replays prior turns for its assigned agent."""
+    llm = llm or create_llm()
+    compiled = _assemble_agent_subgraph(llm, isolated)
     save_graph_image(
         compiled,
         filename=f"artifacts/subgraph_agent_isolated_{isolated}.png",
@@ -83,9 +90,8 @@ def build_agent_subgraph(isolated: bool):
     return compiled
 
 
-def build_parent_graph(isolated_subgraph: bool):
-    """Create a parent graph that delegates to the agent subgraph."""
-    agent = build_agent_subgraph(isolated_subgraph)
+def _assemble_parent_graph(agent, memory: MemorySaver):
+    """Return compiled parent graph that delegates to the provided agent."""
 
     def delegate(state: MessagesState):
         return {"messages": state["messages"]}
@@ -97,7 +103,15 @@ def build_parent_graph(isolated_subgraph: bool):
     parent_builder.add_edge("delegate", "agent")
     parent_builder.add_edge("agent", END)
 
-    graph = parent_builder.compile(checkpointer=MemorySaver())
+    return parent_builder.compile(checkpointer=memory)
+
+
+def build_parent_graph(isolated_subgraph: bool, *, llm=None, memory=None):
+    """Create a parent graph that delegates to the agent subgraph."""
+    llm = llm or create_llm()
+    agent = _assemble_agent_subgraph(llm, isolated_subgraph)
+    saver = memory or MemorySaver()
+    graph = _assemble_parent_graph(agent, saver)
     save_graph_image(
         graph,
         filename=f"artifacts/parent_with_isolated_{isolated_subgraph}.png",
@@ -146,3 +160,12 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the subgraph memory demo."""
+    llm, overrides = llm_from_config(config)
+    isolated = overrides.get("isolated_subgraph", False)
+    memory = MemorySaver()
+    agent = _assemble_agent_subgraph(llm, isolated)
+    return _assemble_parent_graph(agent, memory)

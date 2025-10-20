@@ -38,6 +38,7 @@ import random
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Literal, TypedDict, Type
 
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ValidationError, field_validator
 
@@ -146,3 +147,14 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for comparing schema constraint strategies."""
+    variant = (config or {}).get("configurable", {}).get("variant") if config else None
+    if variant == "typed_dict":
+        return build_graph(TypedDictState, node_1_typed_dict)
+    if variant == "dataclass":
+        return build_graph(DataclassState, node_1_dataclass)
+    # Default to the Pydantic example to showcase strict validation.
+    return build_graph(PydanticState, node_1_pydantic)

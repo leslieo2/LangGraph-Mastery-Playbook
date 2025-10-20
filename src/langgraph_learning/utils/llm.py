@@ -9,10 +9,12 @@ Environment variables resolve in this order:
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from typing import Any, Callable
 
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from langchain_core.runnables import RunnableConfig
 
 load_dotenv()
 
@@ -275,3 +277,61 @@ def require_llm_provider_api_key(provider: str | None = None) -> None:
         f"{api_key_env or 'API key'} must be set for provider '{provider_name}'. "
         "Set the environment variable or pass `api_key` to `create_llm`."
     )
+
+
+def overrides_from_config(config: RunnableConfig | None) -> dict[str, Any]:
+    """Return the `configurable` overrides mapping from a RunnableConfig."""
+
+    if not config:
+        return {}
+
+    if isinstance(config, Mapping):
+        configurable = config.get("configurable", {})
+    else:
+        configurable = getattr(config, "get", lambda *args, **kwargs: {})(
+            "configurable", {}
+        )
+
+    if isinstance(configurable, Mapping):
+        return dict(configurable)
+    return dict(configurable or {})
+
+
+def llm_from_config(
+    config: RunnableConfig | None,
+    *,
+    provider: str | None = None,
+    model: str | None = None,
+    temperature: float | None = None,
+    api_key: str | None = None,
+    base_url: str | None = None,
+    default_provider: str | None = None,
+    default_model: str | None = None,
+    default_temperature: float | None = None,
+) -> tuple[ChatOpenAI, dict[str, Any]]:
+    """Instantiate an LLM using overrides defined in RunnableConfig."""
+
+    overrides = overrides_from_config(config)
+
+    resolved_provider = provider or overrides.get("provider") or default_provider
+    resolved_model = model or overrides.get("model") or default_model
+
+    if temperature is not None:
+        resolved_temperature = temperature
+    else:
+        resolved_temperature = overrides.get("temperature")
+        if resolved_temperature is None:
+            resolved_temperature = default_temperature
+
+    resolved_api_key = api_key or overrides.get("api_key")
+    resolved_base_url = base_url or overrides.get("base_url")
+
+    llm = create_llm(
+        provider=resolved_provider,
+        model=resolved_model,
+        temperature=resolved_temperature,
+        api_key=resolved_api_key,
+        base_url=resolved_base_url,
+    )
+
+    return llm, overrides

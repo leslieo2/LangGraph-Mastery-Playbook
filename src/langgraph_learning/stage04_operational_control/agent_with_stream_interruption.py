@@ -54,6 +54,7 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -72,7 +73,7 @@ class State(MessagesState):
     summary: str
 
 
-def build_streaming_graph(model: ChatOpenAI):
+def _assemble_streaming_graph(model: ChatOpenAI, memory: MemorySaver):
     def call_model(state: State, config: RunnableConfig | None = None):
         summary = state.get("summary", "")
         if summary:
@@ -114,9 +115,11 @@ def build_streaming_graph(model: ChatOpenAI):
     workflow.add_conditional_edges("conversation", should_continue)
     workflow.add_edge("summarize_conversation", END)
 
-    memory = MemorySaver()
-    graph = workflow.compile(checkpointer=memory)
+    return workflow.compile(checkpointer=memory)
 
+
+def build_streaming_graph(model: ChatOpenAI):
+    graph = _assemble_streaming_graph(model, MemorySaver())
     save_graph_image(graph, filename="artifacts/agent_with_stream_interruption.png")
     return graph
 
@@ -224,3 +227,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the streaming interruption demo."""
+    llm, _ = llm_from_config(config)
+    return _assemble_streaming_graph(llm, MemorySaver())

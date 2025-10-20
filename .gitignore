@@ -20,6 +20,9 @@ env/
 # uv cache
 .uv-cache/
 
+# LangGraph API runtime files
+.langgraph_api/
+
 # OS generated files
 .DS_Store
 Thumbs.db

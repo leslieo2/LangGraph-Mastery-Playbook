@@ -33,6 +33,7 @@ TrustCall uses JSON Patch to update only the changed fields, making it:
 
 from __future__ import annotations
 
+from functools import partial
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -56,6 +57,7 @@ if __package__ in {None, ""}:
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -108,8 +110,12 @@ def format_profile_for_display(profile: Optional[dict]) -> str:
     return f"Name: {name}\nLocation: {location}\nJob: {job}\nInterests: {interests}"
 
 
-def call_model_with_memory(
-    state: MessagesState, config: RunnableConfig, store: BaseStore
+def _call_model_with_memory(
+    state: MessagesState,
+    config: RunnableConfig,
+    store: BaseStore,
+    *,
+    llm: ChatOpenAI,
 ):
     """
     Process user message with personalized context from memory.
@@ -135,14 +141,17 @@ def call_model_with_memory(
     )
 
     # Generate response with memory context
-    llm = create_llm()
     response = llm.invoke([system_msg, *state["messages"]])
 
     return {"messages": response}
 
 
-def update_profile_with_trustcall(
-    state: MessagesState, config: RunnableConfig, store: BaseStore
+def _update_profile_with_trustcall(
+    state: MessagesState,
+    config: RunnableConfig,
+    store: BaseStore,
+    *,
+    extractor,
 ):
     """
     Update user profile using TrustCall's incremental update mechanism.
@@ -159,9 +168,6 @@ def update_profile_with_trustcall(
     current_profile = existing_memory.value if existing_memory else None
 
     # Create TrustCall extractor
-    llm = create_llm()
-    extractor = create_extractor(llm, tools=[UserProfile], tool_choice="UserProfile")
-
     # The magic happens here: TrustCall updates only changed fields
     result = extractor.invoke(
         {
@@ -185,7 +191,13 @@ def update_profile_with_trustcall(
 # =============================================================================
 
 
-def build_profile_graph(model: ChatOpenAI | None = None):
+def _assemble_profile_graph(
+    llm: ChatOpenAI,
+    extractor_llm: ChatOpenAI,
+    *,
+    store: BaseStore | None = None,
+    checkpointer: MemorySaver | None = None,
+):
     """
     Build a LangGraph that maintains structured user profiles.
 
@@ -196,31 +208,47 @@ def build_profile_graph(model: ChatOpenAI | None = None):
     1. Responds using current memory
     2. Updates memory with new information
     """
-    llm = model or create_llm()
+    response_llm = llm
+    extractor = create_extractor(
+        extractor_llm, tools=[UserProfile], tool_choice="UserProfile"
+    )
 
-    # Initialize graph builder
+    store = store or InMemoryStore()
+    checkpointer = checkpointer or MemorySaver()
+
     builder = StateGraph(MessagesState)
-
-    # Add nodes
-    builder.add_node("assistant", call_model_with_memory)
-    builder.add_node("update_profile", update_profile_with_trustcall)
+    builder.add_node("assistant", partial(_call_model_with_memory, llm=response_llm))
+    builder.add_node(
+        "update_profile",
+        partial(_update_profile_with_trustcall, extractor=extractor),
+    )
 
     # Define flow
     builder.add_edge(START, "assistant")
     builder.add_edge("assistant", "update_profile")
     builder.add_edge("update_profile", END)
 
-    # Compile with memory stores
-    graph = builder.compile(
-        store=InMemoryStore(),  # Long-term memory (across threads)
-        checkpointer=MemorySaver(),  # Short-term memory (within thread)
-    )
+    return builder.compile(store=store, checkpointer=checkpointer)
 
-    # Save graph visualization
+
+def build_profile_graph(
+    model: ChatOpenAI | None = None,
+    *,
+    extractor_model: ChatOpenAI | None = None,
+    store: BaseStore | None = None,
+    checkpointer: MemorySaver | None = None,
+):
+    llm = model or create_llm()
+    extractor_llm = extractor_model or create_llm()
+    graph = _assemble_profile_graph(
+        llm,
+        extractor_llm,
+        store=store,
+        checkpointer=checkpointer,
+    )
     save_graph_image(
         graph, filename="artifacts/agent_with_structured_memory.png", xray=True
     )
-
     return graph
 
 
@@ -298,3 +326,27 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the structured memory lesson."""
+    llm, overrides = llm_from_config(config)
+    extractor_llm = create_llm(
+        provider=overrides.get("extractor_provider") or overrides.get("provider"),
+        model=overrides.get("extractor_model") or overrides.get("model"),
+        temperature=(
+            overrides.get("extractor_temperature")
+            if overrides.get("extractor_temperature") is not None
+            else overrides.get("temperature")
+        ),
+        api_key=overrides.get("extractor_api_key") or overrides.get("api_key"),
+        base_url=overrides.get("extractor_base_url") or overrides.get("base_url"),
+    )
+    store = InMemoryStore()
+    checkpointer = MemorySaver()
+    return _assemble_profile_graph(
+        llm,
+        extractor_llm,
+        store=store,
+        checkpointer=checkpointer,
+    )

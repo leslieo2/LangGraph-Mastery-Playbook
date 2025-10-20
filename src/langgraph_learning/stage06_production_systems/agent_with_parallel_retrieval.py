@@ -20,10 +20,12 @@ from typing import Annotated, Any, TypedDict
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_community.document_loaders import WikipediaLoader
 from langchain_tavily import TavilySearch
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     require_env,
     require_llm_provider_api_key,
@@ -53,10 +55,12 @@ def _extract_tavily_results(raw: Any) -> list[dict[str, Any]]:
     return []
 
 
-def build_parallel_retrieval_graph() -> StateGraph:
-    """Wire two retrievers in parallel and merge their outputs for the LLM."""
-    llm = create_llm()
-    web_search = TavilySearch(max_results=3)
+def _assemble_parallel_retrieval_graph(
+    llm,
+    web_search,
+    wikipedia_loader_factory,
+):
+    """Return compiled retrieval graph from supplied dependencies."""
 
     def search_web(state: RetrievalState) -> dict[str, list[str]]:
         """Fetch fresh web snippets for the question."""
@@ -73,7 +77,7 @@ def build_parallel_retrieval_graph() -> StateGraph:
 
     def search_wikipedia(state: RetrievalState) -> dict[str, list[str]]:
         """Pull a couple of Wikipedia pages about the topic."""
-        docs = WikipediaLoader(query=state["question"], load_max_docs=2).load()
+        docs = wikipedia_loader_factory(state["question"])
         formatted = "\n\n---\n\n".join(
             f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}">\n'
             f"{doc.page_content}\n</Document>"
@@ -108,7 +112,18 @@ def build_parallel_retrieval_graph() -> StateGraph:
     builder.add_edge("search_wikipedia", "generate_answer")
     builder.add_edge("generate_answer", END)
 
-    graph = builder.compile()
+    return builder.compile()
+
+
+def build_parallel_retrieval_graph() -> StateGraph:
+    """Wire two retrievers in parallel and merge their outputs for the LLM."""
+    llm = create_llm()
+    web_search = TavilySearch(max_results=3)
+
+    def wikipedia_loader(query: str):
+        return WikipediaLoader(query=query, load_max_docs=2).load()
+
+    graph = _assemble_parallel_retrieval_graph(llm, web_search, wikipedia_loader)
     save_graph_image(graph, filename="artifacts/agent_with_parallel_retrieval.png")
     return graph
 
@@ -133,3 +148,14 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the parallel retrieval demo."""
+    llm, _ = llm_from_config(config)
+    web_search = TavilySearch(max_results=3)
+
+    def wikipedia_loader(query: str):
+        return WikipediaLoader(query=query, load_max_docs=2).load()
+
+    return _assemble_parallel_retrieval_graph(llm, web_search, wikipedia_loader)

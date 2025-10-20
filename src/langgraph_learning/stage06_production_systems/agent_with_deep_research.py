@@ -55,6 +55,7 @@ from langchain_core.messages import (
     get_buffer_string,
 )
 from langchain_community.document_loaders import WikipediaLoader
+from langchain_core.runnables import RunnableConfig
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
@@ -65,6 +66,7 @@ from trustcall import create_extractor
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     require_env,
     require_llm_provider_api_key,
@@ -228,17 +230,16 @@ Sections:
 """
 
 
-def build_interview_app(
+def _assemble_interview_app(
+    llm,
     *,
+    tavily_search,
+    wikipedia_loader_factory,
+    search_extractor,
     max_interview_turns: int,
-    model: str | None = None,
-) -> StateGraph:
-    """Compile the interview sub-graph that powers each analyst conversation."""
-    llm = create_llm(model=model, temperature=0)
-    tavily_search = TavilySearch(max_results=3)
-    search_extractor = create_extractor(
-        llm, tools=[SearchQuery], tool_choice=SearchQuery.__name__
-    )
+    checkpointer: MemorySaver,
+):
+    """Return compiled interview sub-graph with provided dependencies."""
 
     def _extract_tavily_results(raw: Any) -> list[dict[str, Any]]:
         if isinstance(raw, ToolMessage):
@@ -297,7 +298,7 @@ def build_interview_app(
         query = _resolve_search_query(state)
         if not query:
             return {"context": []}
-        docs = WikipediaLoader(query=query, load_max_docs=2).load()
+        docs = wikipedia_loader_factory(query)
         formatted = [
             f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}">\n'
             f"{doc.page_content}\n</Document>"
@@ -365,24 +366,56 @@ def build_interview_app(
     interview_builder.add_edge("save_interview", "write_section")
     interview_builder.add_edge("write_section", END)
 
-    return interview_builder.compile(checkpointer=MemorySaver()).with_config(
+    return interview_builder.compile(checkpointer=checkpointer).with_config(
         run_name="conduct_interview"
     )
 
 
-def build_research_assistant_graph(
+def build_interview_app(
     *,
+    max_interview_turns: int,
     model: str | None = None,
-    max_interview_turns: int = 2,
+    provider: str | None = None,
+    temperature: float | None = None,
+    api_key: str | None = None,
+    base_url: str | None = None,
 ) -> StateGraph:
-    """Create the full research assistant LangGraph application."""
-    llm = create_llm(model=model, temperature=0)
-    interview_app = build_interview_app(
-        model=model, max_interview_turns=max_interview_turns
+    """Compile the interview sub-graph that powers each analyst conversation."""
+    llm = create_llm(
+        model=model,
+        provider=provider,
+        temperature=temperature or 0,
+        api_key=api_key,
+        base_url=base_url,
     )
-    analyst_extractor = create_extractor(
-        llm, tools=[Perspectives], tool_choice=Perspectives.__name__
+    tavily_search = TavilySearch(max_results=3)
+
+    def wikipedia_loader(query: str):
+        return WikipediaLoader(query=query, load_max_docs=2).load()
+
+    search_extractor = create_extractor(
+        llm, tools=[SearchQuery], tool_choice=SearchQuery.__name__
     )
+    checkpointer = MemorySaver()
+    return _assemble_interview_app(
+        llm,
+        tavily_search=tavily_search,
+        wikipedia_loader_factory=wikipedia_loader,
+        search_extractor=search_extractor,
+        max_interview_turns=max_interview_turns,
+        checkpointer=checkpointer,
+    )
+
+
+def _assemble_research_assistant_graph(
+    llm,
+    interview_app,
+    analyst_extractor,
+    *,
+    max_interview_turns: int,
+    checkpointer: MemorySaver,
+):
+    """Return compiled research assistant graph using supplied dependencies."""
 
     def create_analysts(state: ResearchGraphState) -> dict[str, list[Analyst]]:
         instructions = ANALYST_INSTRUCTIONS.format(
@@ -508,8 +541,51 @@ def build_research_assistant_graph(
 
     return builder.compile(
         interrupt_before=["human_feedback"],
-        checkpointer=MemorySaver(),
+        checkpointer=checkpointer,
     )
+
+
+def build_research_assistant_graph(
+    *,
+    model: str | None = None,
+    provider: str | None = None,
+    temperature: float | None = None,
+    api_key: str | None = None,
+    base_url: str | None = None,
+    max_interview_turns: int = 2,
+) -> StateGraph:
+    """Create the full research assistant LangGraph application."""
+    base_temperature = 0 if temperature is None else temperature
+    llm = create_llm(
+        model=model,
+        provider=provider,
+        temperature=base_temperature,
+        api_key=api_key,
+        base_url=base_url,
+    )
+    interview_app = build_interview_app(
+        model=model,
+        provider=provider,
+        temperature=base_temperature,
+        api_key=api_key,
+        base_url=base_url,
+        max_interview_turns=max_interview_turns,
+    )
+    analyst_extractor = create_extractor(
+        llm, tools=[Perspectives], tool_choice=Perspectives.__name__
+    )
+    checkpointer = MemorySaver()
+    graph = _assemble_research_assistant_graph(
+        llm,
+        interview_app,
+        analyst_extractor,
+        max_interview_turns=max_interview_turns,
+        checkpointer=checkpointer,
+    )
+    save_graph_image(
+        graph, filename="artifacts/agent_with_deep_research.png", xray=True
+    )
+    return graph
 
 
 def _print_analysts(analysts: Sequence[Analyst]) -> None:
@@ -577,10 +653,37 @@ def main() -> None:
     require_env("TAVILY_API_KEY")
     maybe_enable_langsmith(project="langgraph-research-assistant")
     graph = build_research_assistant_graph()
-    save_graph_image(
-        graph, filename="artifacts/agent_with_deep_research.png", xray=True
-    )
     run_demo(graph)
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the deep research workflow."""
+    llm, overrides = llm_from_config(config, default_temperature=0)
+    model_name = overrides.get("model")
+    provider = overrides.get("provider")
+    temperature = overrides.get("temperature", 0)
+    api_key = overrides.get("api_key")
+    base_url = overrides.get("base_url")
+    max_turns = overrides.get("max_interview_turns", 2)
+    interview_app = build_interview_app(
+        model=model_name,
+        provider=provider,
+        temperature=temperature,
+        api_key=api_key,
+        base_url=base_url,
+        max_interview_turns=max_turns,
+    )
+    analyst_extractor = create_extractor(
+        llm, tools=[Perspectives], tool_choice=Perspectives.__name__
+    )
+    checkpointer = MemorySaver()
+    return _assemble_research_assistant_graph(
+        llm,
+        interview_app,
+        analyst_extractor,
+        max_interview_turns=max_turns,
+        checkpointer=checkpointer,
+    )
 
 
 if __name__ == "__main__":

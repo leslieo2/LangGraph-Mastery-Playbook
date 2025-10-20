@@ -39,6 +39,7 @@ from __future__ import annotations
 from typing import TypedDict
 from uuid import uuid4
 
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
@@ -52,8 +53,8 @@ class FormState(TypedDict, total=False):
     age: int
 
 
-def build_validation_graph():
-    """Create a graph that keeps asking for age until it receives a positive integer."""
+def _assemble_validation_graph(memory: MemorySaver):
+    """Return validation graph compiled with supplied checkpointer."""
 
     def collect_age(state: FormState):
         prompt = "What is your age?"
@@ -70,7 +71,13 @@ def build_validation_graph():
     builder.add_edge(START, "collect_age")
     builder.add_edge("collect_age", END)
 
-    graph = builder.compile(checkpointer=MemorySaver())
+    graph = builder.compile(checkpointer=memory)
+    return graph
+
+
+def build_validation_graph():
+    """Create a graph that keeps asking for age until it receives a positive integer."""
+    graph = _assemble_validation_graph(MemorySaver())
     save_graph_image(graph, filename="artifacts/agent_with_validation_loop.png")
     return graph
 
@@ -125,3 +132,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the validation loop demo."""
+    return _assemble_validation_graph(MemorySaver())

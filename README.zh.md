@@ -55,6 +55,9 @@ uv run python -m src.langgraph_learning.stage06_production_systems.agent_with_de
 
 ## 快速开始
 
+<details>
+<summary><b>📋 安装说明（点击展开）</b></summary>
+
 我们使用 [uv](https://docs.astral.sh/uv/) 管理依赖；如有需要，仍然可以导出传统的 `requirements.txt`。
 
 ```bash
@@ -92,7 +95,10 @@ OPENROUTER_MODEL=anthropic/claude-3-haiku
 OPENROUTER_TEMPERATURE=0.2
 ```
 
-### 运行课程脚本
+</details>
+
+<details>
+<summary><b>🚀 运行课程脚本（点击展开）</b></summary>
 
 每个脚本都可以通过 `python -m` 运行（使用 uv 时也可用 `uv run ...`）：
 
@@ -141,6 +147,8 @@ python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_rese
 
 多数课程会在对应模块的 `artifacts/` 目录下生成图形化的 PNG；流式课程会输出增量信息；调试课程可能会提示手动确认。
 
+</details>
+
 
 ## 与 Notebook 教程的差异
 
@@ -159,12 +167,23 @@ python -m src.langgraph_learning.stage06_production_systems.agent_with_deep_rese
 
 玩转agent，尽情享受！🎯
 
+## LangGraph Studio 集成
+
+本手册中的所有 agent 都可以在 **LangGraph Studio** 中进行可视化调试、测试和部署。详细设置说明请参阅 [STUDIO_SETUP.md](STUDIO_SETUP.md)。
+
+**快速开始：**
+```bash
+langgraph dev
+```
+然后打开：`https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024`
+
 ## 致谢
 
 - 本项目的结构和许多课程思路，灵感来自出色的 [Intro to LangGraph](https://academy.langchain.com/courses/take/intro-to-langgraph) 课程。
 - 官方的 [LangChain + LangGraph 文档](https://docs.langchain.com/) 是跟随脚本学习时不可或缺的参考资料。
 
-## 可选依赖与冒烟测试
+<details>
+<summary><b>🔧 可选依赖与冒烟测试（点击展开）</b></summary>
 
 部分生产级课程需要额外安装以下包：
 
@@ -190,3 +209,5 @@ uv run python scripts/production_memory_smoke.py
 ```
 
 脚本会打印已成功建立连接的后端，并在失败时给出排查提示。
+
+</details>

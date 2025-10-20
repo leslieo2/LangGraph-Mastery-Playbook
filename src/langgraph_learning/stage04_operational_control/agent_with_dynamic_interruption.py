@@ -40,6 +40,7 @@ import asyncio
 import os
 from uuid import uuid4
 
+from langchain_core.runnables import RunnableConfig
 from langgraph.types import interrupt
 from typing_extensions import TypedDict
 
@@ -60,15 +61,19 @@ class State(TypedDict):
     input: str
 
 
-def build_dynamic_breakpoint_graph():
+def _assemble_dynamic_breakpoint_graph(
+    *,
+    max_length: int,
+    memory: MemorySaver | None = None,
+):
     def step_1(state: State) -> State:
         print("---Step 1---")
         return state
 
     def step_2(state: State) -> State:
-        if len(state["input"]) > 5:
+        if len(state["input"]) > max_length:
             raise interrupt(
-                f"Received input that is longer than 5 characters: {state['input']}"
+                f"Received input that is longer than {max_length} characters: {state['input']}"
             )
         print("---Step 2---")
         return state
@@ -87,8 +92,12 @@ def build_dynamic_breakpoint_graph():
     builder.add_edge("step_2", "step_3")
     builder.add_edge("step_3", END)
 
-    memory = MemorySaver()
-    graph = builder.compile(checkpointer=memory)
+    graph_memory = memory or MemorySaver()
+    return builder.compile(checkpointer=graph_memory)
+
+
+def build_dynamic_breakpoint_graph(max_length: int = 5):
+    graph = _assemble_dynamic_breakpoint_graph(max_length=max_length)
     save_graph_image(
         graph, filename="artifacts/debugging/agent_with_dynamic_interruption.png"
     )
@@ -135,3 +144,10 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the dynamic interruption demo."""
+    overrides = (config or {}).get("configurable", {}) if config else {}
+    max_length = overrides.get("max_length", 5)
+    return _assemble_dynamic_breakpoint_graph(max_length=int(max_length))

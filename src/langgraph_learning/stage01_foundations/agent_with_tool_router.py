@@ -37,11 +37,13 @@ Lesson Flow
 from __future__ import annotations
 
 from langchain_core.messages import HumanMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     multiply,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -49,21 +51,29 @@ from src.langgraph_learning.utils import (
 )
 
 
-def build_tool_calling_graph(model: str | None = None):
-    """Create a compiled StateGraph configured for tool routing."""
-    llm = create_llm(model=model)
-    llm_with_tools = llm.bind_tools([multiply])
+TOOLS = [multiply]
+
+
+def _assemble_tool_router_graph(llm):
+    """Return compiled tool-router graph using provided LLM."""
+    llm_with_tools = llm.bind_tools(TOOLS)
 
     def tool_calling_llm(state: MessagesState):
         return {"messages": [llm_with_tools.invoke(state["messages"])]}
 
     graph = StateGraph(MessagesState)
     graph.add_node("tool_calling_llm", tool_calling_llm)
-    graph.add_node("tools", ToolNode([multiply]))
+    graph.add_node("tools", ToolNode(TOOLS))
     graph.add_edge(START, "tool_calling_llm")
     graph.add_conditional_edges("tool_calling_llm", tools_condition)
     graph.add_edge("tools", END)
     return graph.compile()
+
+
+def build_tool_calling_graph(*, model: str | None = None):
+    """Create a compiled StateGraph configured for tool routing."""
+    llm = create_llm(model=model)
+    return _assemble_tool_router_graph(llm)
 
 
 def run_demo(graph) -> None:
@@ -82,3 +92,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the tool router graph."""
+    llm, _ = llm_from_config(config)
+    return _assemble_tool_router_graph(llm)

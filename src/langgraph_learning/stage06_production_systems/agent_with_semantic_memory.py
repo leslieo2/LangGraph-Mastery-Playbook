@@ -52,6 +52,7 @@ from langgraph.store.memory import InMemoryStore
 
 from src.langgraph_learning.utils import (
     create_llm,
+    llm_from_config,
     maybe_enable_langsmith,
     pretty_print_messages,
     require_llm_provider_api_key,
@@ -75,10 +76,12 @@ def create_semantic_store(
     )
 
 
-def build_semantic_graph(store: InMemoryStore):
-    """Compile a LangGraph that injects semantic memories into the prompt."""
-    llm = create_llm()
-    memory = MemorySaver()
+def _assemble_semantic_graph(
+    llm,
+    store: InMemoryStore,
+    memory: MemorySaver,
+):
+    """Return compiled semantic memory graph with provided dependencies."""
 
     def _namespace(config: RunnableConfig) -> tuple[str, str]:
         user_id = config["configurable"]["user_id"]
@@ -117,7 +120,14 @@ def build_semantic_graph(store: InMemoryStore):
     builder.add_edge("conversation", "write_memory")
     builder.add_edge("write_memory", END)
 
-    graph = builder.compile(store=store, checkpointer=memory)
+    return builder.compile(store=store, checkpointer=memory)
+
+
+def build_semantic_graph(store: InMemoryStore):
+    """Compile a LangGraph that injects semantic memories into the prompt."""
+    llm = create_llm()
+    memory = MemorySaver()
+    graph = _assemble_semantic_graph(llm, store, memory)
     save_graph_image(graph, filename="artifacts/agent_with_semantic_memory.png")
     return graph
 
@@ -155,3 +165,11 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def studio_graph(config: RunnableConfig | None = None):
+    """Studio entry point for the semantic memory demo."""
+    llm, _ = llm_from_config(config)
+    store = create_semantic_store()
+    memory = MemorySaver()
+    return _assemble_semantic_graph(llm, store, memory)

@@ -1,0 +1,36 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "stage01_tool_call": "./src/langgraph_learning/stage01_foundations/agent_with_tool_call.py:studio_graph",
+    "stage01_router": "./src/langgraph_learning/stage01_foundations/agent_with_router.py:studio_graph",
+    "stage01_tool_router": "./src/langgraph_learning/stage01_foundations/agent_with_tool_router.py:studio_graph",
+    "stage01_reactive_router": "./src/langgraph_learning/stage01_foundations/agent_with_reactive_router.py:studio_graph",
+    "stage02_short_term_memory": "./src/langgraph_learning/stage02_memory_basics/agent_with_short_term_memory.py:studio_graph",
+    "stage02_chat_summary": "./src/langgraph_learning/stage02_memory_basics/agent_with_chat_summary.py:studio_graph",
+    "stage02_external_memory": "./src/langgraph_learning/stage02_memory_basics/agent_with_external_short_term_memory.py:studio_graph",
+    "stage03_parallel_nodes": "./src/langgraph_learning/stage03_state_management/agent_with_parallel_nodes.py:studio_graph",
+    "stage03_subgraph": "./src/langgraph_learning/stage03_state_management/agent_with_subgraph.py:studio_graph",
+    "stage03_subgraph_memory": "./src/langgraph_learning/stage03_state_management/agent_with_subgraph_memory.py:studio_graph",
+    "stage04_interruption": "./src/langgraph_learning/stage04_operational_control/agent_with_interruption.py:studio_graph",
+    "stage04_validation_loop": "./src/langgraph_learning/stage04_operational_control/agent_with_validation_loop.py:studio_graph",
+    "stage04_tool_approval": "./src/langgraph_learning/stage04_operational_control/agent_with_tool_approval_interrupt.py:studio_graph",
+    "stage04_stream_interruption": "./src/langgraph_learning/stage04_operational_control/agent_with_stream_interruption.py:studio_graph",
+    "stage04_time_travel": "./src/langgraph_learning/stage04_operational_control/agent_with_time_travel.py:studio_graph",
+    "stage05_structured_memory": "./src/langgraph_learning/stage05_advanced_memory_systems/agent_with_structured_memory.py:studio_graph",
+    "stage05_fact_collection": "./src/langgraph_learning/stage05_advanced_memory_systems/agent_with_fact_collection.py:studio_graph",
+    "stage05_long_term_memory": "./src/langgraph_learning/stage05_advanced_memory_systems/agent_with_long_term_memory.py:studio_graph",
+    "stage05_multi_memory": "./src/langgraph_learning/stage05_advanced_memory_systems/agent_with_multi_memory_coordination.py:studio_graph",
+    "stage06_parallel_retrieval": "./src/langgraph_learning/stage06_production_systems/agent_with_parallel_retrieval.py:studio_graph",
+    "stage06_semantic_memory": "./src/langgraph_learning/stage06_production_systems/agent_with_semantic_memory.py:studio_graph",
+    "stage06_production_memory": "./src/langgraph_learning/stage06_production_systems/agent_with_production_memory.py:studio_graph",
+    "stage06_deep_research": "./src/langgraph_learning/stage06_production_systems/agent_with_deep_research.py:studio_graph",
+    "stage03_multiple_state": "./src/langgraph_learning/stage03_state_management/agent_with_multiple_state.py:studio_graph",
+    "stage03_schema_validation": "./src/langgraph_learning/stage03_state_management/agent_with_pydantic_schema_constrain.py:studio_graph",
+    "stage03_state_reducer": "./src/langgraph_learning/stage03_state_management/agent_with_state_reducer.py:studio_graph",
+    "stage04_message_filter": "./src/langgraph_learning/stage04_operational_control/agent_with_message_filter.py:studio_graph",
+    "stage04_dynamic_interruption": "./src/langgraph_learning/stage04_operational_control/agent_with_dynamic_interruption.py:studio_graph"
+  },
+  "env": ".env"
+}
