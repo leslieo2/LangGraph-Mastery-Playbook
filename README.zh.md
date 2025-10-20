@@ -47,7 +47,7 @@ uv run python -m src.langgraph_learning.stage06_production_systems.agent_with_de
 | `stage01_foundations` → `quickstart`、`agent_with_tool_call`、`agent_with_router`、`agent_with_tool_router`、`agent_with_reactive_router` | 验证凭证、绑定工具、设计分支流程，并练习响应式工具循环。 | 搭建 `MessagesState`、检测并执行工具调用、配置条件边、循环处理多轮工具回放。 | ~2 小时 |
 | `stage02_memory_basics` → `agent_with_short_term_memory`、`agent_with_chat_summary`、`agent_with_external_short_term_memory` | 为对话代理叠加检查点、摘要与 SQLite 持久化。 | 配置 `MemorySaver`、组织摘要 reducer、在不改动核心逻辑的前提下切换持久化存储。 | ~2 小时 |
 | `stage03_state_management` → `agent_with_parallel_nodes`、`agent_with_state_reducer`、`agent_with_multiple_state`、`agent_with_pydantic_schema_constrain`、`agent_with_subgraph`、`agent_with_subgraph_memory` | 掌握大型流程里的类型化状态、Reducer 与子图。 | 借助 `Send` 并行化、化解 Reducer 冲突、按节点隔离状态、为子图独立记忆。 | ~3 小时 |
-| `stage04_operational_control` → `agent_with_interruption`、`agent_with_validation_loop`、`agent_with_tool_approval_interrupt`、`agent_with_stream_interruption`、`agent_with_dynamic_interruption`、`agent_with_message_filter`、`agent_with_time_travel` | 演练联机调试、风控与运行记录排查。 | 注入断点、构建校验循环、掌控流式输出、裁剪历史、从过去运行分叉。 | ~3 小时 |
+| `stage04_operational_control` → `agent_with_interruption`、`agent_with_validation_loop`、`agent_with_tool_approval_interrupt`、`agent_with_stream_interruption`、`agent_with_dynamic_interruption`、`agent_with_durable_execution`、`agent_with_message_filter`、`agent_with_time_travel` | 演练联机调试、风控与运行记录排查。 | 注入断点、构建校验循环、封装副作用任务避免重复执行、掌控流式输出、裁剪历史、从过去运行分叉。 | ~3 小时 |
 | `stage05_advanced_memory_systems` → `agent_with_structured_memory`、`agent_with_fact_collection`、`agent_with_long_term_memory`、`agent_with_multi_memory_coordination` | 构建多层 TrustCall 记忆与个性化流程。 | 抽取结构化档案、采集事实、撰写反思摘要、在多记忆间智能路由。 | ~3 小时 |
 | `stage06_production_systems` → `agent_with_parallel_retrieval`、`agent_with_semantic_memory`、`agent_with_production_memory`、`agent_with_deep_research` | 交付生产级检索与研究流水线。 | 并联检索器、融合语义召回、配置外部检查点后端、运行深度研究工作流。 | ~3 小时 |
 
@@ -129,6 +129,7 @@ python -m src.langgraph_learning.stage04_operational_control.agent_with_validati
 python -m src.langgraph_learning.stage04_operational_control.agent_with_tool_approval_interrupt
 python -m src.langgraph_learning.stage04_operational_control.agent_with_stream_interruption
 python -m src.langgraph_learning.stage04_operational_control.agent_with_dynamic_interruption
+python -m src.langgraph_learning.stage04_operational_control.agent_with_durable_execution
 python -m src.langgraph_learning.stage04_operational_control.agent_with_message_filter
 python -m src.langgraph_learning.stage04_operational_control.agent_with_time_travel
 

@@ -18,6 +18,7 @@
     "stage04_tool_approval": "./src/langgraph_learning/stage04_operational_control/agent_with_tool_approval_interrupt.py:studio_graph",
     "stage04_stream_interruption": "./src/langgraph_learning/stage04_operational_control/agent_with_stream_interruption.py:studio_graph",
     "stage04_time_travel": "./src/langgraph_learning/stage04_operational_control/agent_with_time_travel.py:studio_graph",
+    "stage04_durable_execution": "./src/langgraph_learning/stage04_operational_control/agent_with_durable_execution.py:studio_graph",
     "stage05_structured_memory": "./src/langgraph_learning/stage05_advanced_memory_systems/agent_with_structured_memory.py:studio_graph",
     "stage05_fact_collection": "./src/langgraph_learning/stage05_advanced_memory_systems/agent_with_fact_collection.py:studio_graph",
     "stage05_long_term_memory": "./src/langgraph_learning/stage05_advanced_memory_systems/agent_with_long_term_memory.py:studio_graph",
