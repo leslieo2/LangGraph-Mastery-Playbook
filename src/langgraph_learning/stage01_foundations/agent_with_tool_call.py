@@ -54,7 +54,9 @@ def inspect_tool_binding() -> None:
         [HumanMessage(content="What is 223123123 multiplied by 3241241?")]
     )
     pretty_print_messages([response], header="Tool call response")
-    print("\nNote: The model knows about the multiply tool but doesn't execute it automatically.")
+    print(
+        "\nNote: The model knows about the multiply tool but doesn't execute it automatically."
+    )
 
 
 def build_tool_calling_app(*, model: str | None = None):

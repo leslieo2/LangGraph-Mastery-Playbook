@@ -9,21 +9,20 @@ description = "Stage-based LangGraph learning curriculum"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "langgraph",
-    "langgraph-prebuilt",
-    "langgraph-sdk",
-    "langgraph-checkpoint-sqlite",
-    "langgraph-cli[inmem]",
+    "langgraph>=1.0.0",
+    "langgraph-prebuilt>=1.0.0",
+    "langgraph-sdk>=0.2.9",
+    "langgraph-checkpoint-sqlite>=2.0.11",
+    "langgraph-cli[inmem]>=0.4.4",
     "langsmith",
     "langchain-community",
-    "langchain-core",
-    "langchain-openai",
+    "langchain-core>=1.0.0",
+    "langchain-openai>=1.0.0",
     "httpx[socks]",
     "langchain-tavily",
     "python-dotenv",
     "notebook",
     "tavily-python",
-    "trustcall",
     "wikipedia",
 ]
 

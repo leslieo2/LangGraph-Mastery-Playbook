@@ -23,7 +23,7 @@ Reusable checklist for refreshing course files so documentation and code stay al
 - Add concise comments only when a non-obvious teaching point needs emphasis.
 
 ## 4. Optional Enhancements
-- Suggest targeted annotations (e.g., why TrustCall is reused, when to remove demos) that make the teaching intent clearer.
+- Suggest targeted annotations (e.g., why structured output is reused, when to remove demos) that make the teaching intent clearer.
 - Document these suggestions in code when they reduce future reviewer effort.
 
 ## 5. Sanity Check

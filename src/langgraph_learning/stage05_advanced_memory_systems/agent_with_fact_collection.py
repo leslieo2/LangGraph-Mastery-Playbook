@@ -1,5 +1,5 @@
 """
-Advanced Memory System: Flexible Fact Collection with TrustCall
+Advanced Memory System: Flexible Fact Collection with LangChain Structured Output
 
 === PROBLEM STATEMENT ===
 Traditional memory systems often force all user information into rigid schemas, but real conversations contain diverse facts that don't fit predefined categories.
@@ -13,7 +13,7 @@ Each fact is stored independently, allowing flexible accumulation of diverse use
 - **Flexible Schema**: Simple Memory schema with just a 'content' field
 - **Multiple Storage**: Each fact stored as separate document with unique key
 - **Searchable Collection**: All memories can be retrieved and searched independently
-- **TrustCall Tool Choice**: `create_extractor(..., tool_choice="Memory")` locks the LLM to the Memory schema while TrustCall applies JSON Patch-style inserts/updates
+- **LangChain Structured Output**: Uses ToolStrategy with automatic error handling for reliable fact extraction
 
 === COMPARISON WITH STRUCTURED PROFILES ===
 | Structured Profiles (agent_with_structured_memory.py) | Fact Collections (this file) |
@@ -25,12 +25,12 @@ Each fact is stored independently, allowing flexible accumulation of diverse use
 
 What You'll Learn
 1. Model user memories as flexible Pydantic schemas and store them as searchable collections.
-2. Invoke TrustCall, which relies on LLM tool choice to guarantee schema-compliant outputs, to insert or update memories in parallel with structured outputs.
+2. Use LangChain's structured output with ToolStrategy to guarantee schema-compliant outputs.
 3. Compile a LangGraph that reads existing memories, updates them, and logs the results.
 
 Lesson Flow
-1. Define the `Memory` schema and create a TrustCall extractor configured with tool choice and inserts.
-2. Build read/write nodes that render memory into prompts and persist TrustCall responses.
+1. Define the `Memory` schema and create a structured agent configured with ToolStrategy.
+2. Build read/write nodes that render memory into prompts and persist structured responses.
 3. Run scripted interactions, then iterate through the memory store to inspect saved items.
 """
 
@@ -38,6 +38,8 @@ from __future__ import annotations
 
 import uuid
 
+from langchain.agents import create_agent
+from langchain.agents.structured_output import ToolStrategy
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
@@ -46,7 +48,6 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.store.base import BaseStore
 from langgraph.store.memory import InMemoryStore
 from pydantic import BaseModel, Field
-from trustcall import create_extractor
 
 if __package__ in {None, ""}:
     import sys
@@ -84,7 +85,7 @@ MODEL_SYSTEM_MESSAGE = """You are a helpful companion that remembers facts about
 Here is your current memory (may be empty):
 {memory}"""
 
-TRUSTCALL_INSTRUCTION = """Reflect on this interaction.
+STRUCTURED_OUTPUT_INSTRUCTION = """Reflect on this interaction.
 Use the Memory tool to retain any useful details about the user.
 Insert brand new memories or update existing ones as needed."""
 
@@ -133,20 +134,20 @@ def _create_read_facts_node(llm: ChatOpenAI):
 
 
 def _create_update_facts_node(llm: ChatOpenAI):
-    """Create the node that updates fact collection using TrustCall.
+    """Create the node that updates fact collection using LangChain structured output.
 
-    KEY INNOVATION: TrustCall with enable_inserts=True allows creating
-    NEW facts alongside updating existing ones - perfect for collections.
+    KEY INNOVATION: LangChain's structured output with ToolStrategy provides
+    reliable schema validation and automatic error handling for fact extraction.
     """
-    extractor = create_extractor(
-        llm,
-        tools=[Memory],
-        tool_choice="Memory",
-        enable_inserts=True,  # CRITICAL: Allows inserting new facts
+    # Create structured agent for fact extraction
+    structured_agent = create_agent(
+        model=llm,
+        tools=[],
+        response_format=ToolStrategy(schema=Memory, handle_errors=True),
     )
 
     def update_facts(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        """Update fact collection using TrustCall extractor.
+        """Update fact collection using structured output.
 
         CORE CONCEPT: Each fact is stored as a separate document with unique key.
         This enables flexible accumulation of diverse user information over time.
@@ -160,24 +161,26 @@ def _create_update_facts_node(llm: ChatOpenAI):
         namespace = ("memories", cfg.user_id)
         current_items = list(store.search(namespace))
 
-        # Prepare existing facts for TrustCall - each gets its own key
-        existing = (
-            [(item.key, "Memory", item.value) for item in current_items]
-            if current_items
-            else None
-        )
+        # Prepare context about existing facts
+        existing_context = ""
+        if current_items:
+            existing_facts = [
+                f"- {item.value.get('content', 'Unknown')}" for item in current_items
+            ]
+            existing_context = f"\n\nExisting memories:\n" + "\n".join(existing_facts)
 
-        # Invoke TrustCall extractor to update fact collection
+        # Invoke structured agent to extract new facts
         request_messages = [
-            SystemMessage(content=TRUSTCALL_INSTRUCTION),
+            SystemMessage(content=f"{STRUCTURED_OUTPUT_INSTRUCTION}{existing_context}"),
             *state["messages"],
         ]
-        result = extractor.invoke({"messages": request_messages, "existing": existing})
+        result = structured_agent.invoke({"messages": request_messages})
 
-        # Store updated facts - each as separate document
-        for response, meta in zip(result["responses"], result["response_metadata"]):
-            key = meta.get("json_doc_id") or str(uuid.uuid4())
-            store.put(namespace, key, response.model_dump(mode="json"))
+        # Store new facts - each as separate document
+        structured_response = result.get("structured_response")
+        if structured_response:
+            key = str(uuid.uuid4())
+            store.put(namespace, key, structured_response.model_dump(mode="json"))
 
     return update_facts
 
@@ -207,7 +210,7 @@ def _assemble_fact_collection_graph(
 
 
 def build_agent_with_fact_collection(model: ChatOpenAI | None = None):
-    """Compile a graph that stores multiple user facts via TrustCall.
+    """Compile a graph that stores multiple user facts via structured output.
 
     GRAPH FLOW: START → read_facts → update_facts → END
 

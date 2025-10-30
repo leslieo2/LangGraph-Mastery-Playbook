@@ -1,5 +1,5 @@
 """
-Advanced Memory System: Structured User Profiles with TrustCall
+Advanced Memory System: Structured User Profiles with LangChain Structured Output
 
 === WHY THIS COURSE MATTERS ===
 Getting LLMs to output structured data according to a schema is surprisingly difficult.
@@ -10,25 +10,24 @@ Traditional approaches face several challenges:
 3. **Token Inefficiency**: Full rewrites waste tokens on unchanged data
 4. **Complex Schema Failure**: Nested structures frequently cause parsing errors
 
-TrustCall solves these problems by using JSON Patch for incremental updates,
-ensuring structured output while preserving existing data efficiently.
+LangChain's structured output solves these problems with automatic strategy selection,
+ensuring structured output while providing reliable schema validation.
 
 === Core Concepts ===
 1. Structured Memory: Use Pydantic Schema to define user profiles
-2. Incremental Updates: TrustCall uses JSON Patch to update only changed parts
+2. Native Integration: LangChain automatically selects ProviderStrategy or ToolStrategy
 3. Personalized Responses: Integrate memory into conversation context
 
 === Key Innovation ===
-Traditional structured output regenerates the entire schema each time.
-TrustCall uses JSON Patch to update only the changed fields, making it:
-- More efficient (saves tokens)
-- More reliable (preserves existing data)
-- Better for complex schemas
+LangChain's structured output provides automatic strategy selection:
+- ProviderStrategy for models with native structured output support (OpenAI, Grok)
+- ToolStrategy for universal compatibility with all tool-calling models
+- Built-in error handling and validation
 
 === Learning Objectives ===
-1. Understand TrustCall's incremental update mechanism
+1. Understand LangChain's structured output strategies
 2. Learn to integrate structured memory into LangGraph
-3. See the difference between full rewrite vs incremental update
+3. Compare different structured output approaches
 """
 
 from __future__ import annotations
@@ -37,8 +36,9 @@ from functools import partial
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
-from trustcall import create_extractor
 
+from langchain.agents import create_agent
+from langchain.agents.structured_output import ToolStrategy
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
@@ -93,7 +93,7 @@ Current user profile:
 {profile}
 Use this information to personalize your responses."""
 
-TRUSTCALL_INSTRUCTION = """Reflect on the conversation and update the user profile.
+STRUCTURED_OUTPUT_INSTRUCTION = """Reflect on the conversation and update the user profile.
 Only include details directly stated by the user."""
 
 
@@ -146,19 +146,19 @@ def _call_model_with_memory(
     return {"messages": response}
 
 
-def _update_profile_with_trustcall(
+def _update_profile_with_structured_output(
     state: MessagesState,
     config: RunnableConfig,
     store: BaseStore,
     *,
-    extractor,
+    structured_agent,
 ):
     """
-    Update user profile using TrustCall's incremental update mechanism.
+    Update user profile using LangChain's structured output.
 
-    KEY INNOVATION: Instead of regenerating the entire profile,
-    TrustCall uses JSON Patch to update only the changed fields.
-    This is more efficient and preserves existing data.
+    KEY INNOVATION: LangChain automatically selects the best strategy
+    (ProviderStrategy for native support, ToolStrategy for universal compatibility)
+    and provides built-in error handling and validation.
     """
     user_id = config["configurable"]["user_id"]
     namespace = ("profile", user_id)
@@ -167,21 +167,29 @@ def _update_profile_with_trustcall(
     existing_memory = store.get(namespace, "user_profile")
     current_profile = existing_memory.value if existing_memory else None
 
-    # Create TrustCall extractor
-    # The magic happens here: TrustCall updates only changed fields
-    result = extractor.invoke(
+    # Format existing profile for context
+    existing_context = (
+        f"Current profile: {current_profile}"
+        if current_profile
+        else "No existing profile"
+    )
+
+    # Use structured agent to extract and update profile
+    result = structured_agent.invoke(
         {
             "messages": [
-                SystemMessage(content=TRUSTCALL_INSTRUCTION),
+                SystemMessage(
+                    content=f"{STRUCTURED_OUTPUT_INSTRUCTION}\n\n{existing_context}"
+                ),
                 *state["messages"],
-            ],
-            "existing": {"UserProfile": current_profile} if current_profile else None,
+            ]
         }
     )
 
     # Extract and store the updated profile
-    if result["responses"]:
-        updated_profile = result["responses"][0].model_dump()
+    structured_response = result.get("structured_response")
+    if structured_response:
+        updated_profile = structured_response.model_dump()
         store.put(namespace, "user_profile", updated_profile)
 
 
@@ -202,15 +210,19 @@ def _assemble_profile_graph(
     Build a LangGraph that maintains structured user profiles.
 
     Graph Flow:
-    START → call_model_with_memory → update_profile_with_trustcall → END
+    START → call_model_with_memory → update_profile_with_structured_output → END
 
     Each conversation turn:
     1. Responds using current memory
-    2. Updates memory with new information
+    2. Updates memory with new information using structured output
     """
     response_llm = llm
-    extractor = create_extractor(
-        extractor_llm, tools=[UserProfile], tool_choice="UserProfile"
+
+    # Create structured agent for profile extraction
+    structured_agent = create_agent(
+        model=extractor_llm,
+        tools=[],
+        response_format=ToolStrategy(schema=UserProfile, handle_errors=True),
     )
 
     store = store or InMemoryStore()
@@ -220,7 +232,9 @@ def _assemble_profile_graph(
     builder.add_node("assistant", partial(_call_model_with_memory, llm=response_llm))
     builder.add_node(
         "update_profile",
-        partial(_update_profile_with_trustcall, extractor=extractor),
+        partial(
+            _update_profile_with_structured_output, structured_agent=structured_agent
+        ),
     )
 
     # Define flow
@@ -259,10 +273,10 @@ def build_profile_graph(
 
 
 def demo_conversation(graph) -> None:
-    """Run a short conversation that demonstrates structured memory with TrustCall."""
+    """Run a short conversation that demonstrates structured memory with LangChain structured output."""
     config = {"configurable": {"thread_id": "demo", "user_id": "user123"}}
 
-    print("=== DEMONSTRATION: Structured Memory with TrustCall ===\n")
+    print("=== DEMONSTRATION: Structured Memory with LangChain Structured Output ===\n")
 
     # Conversation 1: Create initial profile
     print("1. First conversation - Creating profile:")
@@ -312,9 +326,11 @@ def demo_conversation(graph) -> None:
 
     print("\n=== KEY TAKEAWAY ===")
     print(
-        "TrustCall enabled incremental updates without regenerating the entire profile."
+        "LangChain's structured output provides reliable schema validation with automatic strategy selection."
     )
-    print("This is more efficient and preserves all previously stored information.")
+    print(
+        "ProviderStrategy for native support, ToolStrategy for universal compatibility."
+    )
 
 
 def main() -> None:

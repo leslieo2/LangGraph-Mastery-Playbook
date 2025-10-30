@@ -20,10 +20,10 @@ while `MemorySaver` maintains per-thread state for reliable conversation playbac
   demonstrating how LangGraph configuration steers storage and retrieval.
 
 === COMPARISON WITH STRUCTURED PROFILES ===
-| Structured Profiles (TrustCall) | Long-Term Bullet Memory (this file) |
+| Structured Profiles (Structured Output) | Long-Term Bullet Memory (this file) |
 |---------------------------------|-------------------------------------|
 | JSON schemas with field-level updates | Free-form bullet list stored as text |
-| TrustCall manages incremental patches | Model regenerates entire summary each turn |
+| Structured output manages incremental patches | Model regenerates entire summary each turn |
 | Rich structure for downstream automation | Lightweight notes for quick personalization |
 
 What You'll Learn

@@ -37,18 +37,18 @@ uv run python -m src.langgraph_learning.stage06_production_systems.agent_with_de
 
 - **脚本优先的教程。** 大多数 LangGraph 示例都放在 Jupyter Notebook 里——读起来方便，复用起来麻烦。本项目的每个示例都是带 `main()` 入口的独立 Python 模块，并按阶段提供专属辅助工具。
 - **有结构的学习路线。** 课程分为编号的阶段，从 Stage 01 基础图技能到 Stage 06 生产级检索与综合，每一步都知道接下来该学什么。
-- **一致的工具体系。** 共享工具负责图形可视化、环境检查、TrustCall 分析，以及常用的数学工具。减少样板代码，把时间留给核心概念。
+- **一致的工具体系。** 共享工具负责图形可视化、环境检查、结构化输出分析，以及常用的数学工具。减少样板代码，把时间留给核心概念。
 - **便于自动化。** 全部基于纯 Python，你可以无界面运行整套课程，集成到 CI 流水线，或扩展成自己的测试。
 
 ## 学习路线
 
 | Stage | 课程速览 | 核心收获 | 预计用时 |
 | --- | --- | --- | --- |
-| `stage01_foundations` → `quickstart`、`agent_with_tool_call`、`agent_with_router`、`agent_with_tool_router`、`agent_with_reactive_router` | 验证凭证、绑定工具、设计分支流程，并练习响应式工具循环。 | 搭建 `MessagesState`、检测并执行工具调用、配置条件边、循环处理多轮工具回放。 | ~2 小时 |
+| `stage01_foundations` → `quickstart`、`agent_with_tool_call`、`agent_with_router`、`agent_with_tool_router`、`agent_with_reactive_router`、`agent_with_structured_output` | 验证凭证、绑定工具、设计分支流程，练习响应式工具循环，并掌握结构化输出。 | 搭建 `MessagesState`、检测并执行工具调用、配置条件边、循环处理多轮工具回放、生成带验证的结构化数据。 | ~2.5 小时 |
 | `stage02_memory_basics` → `agent_with_short_term_memory`、`agent_with_chat_summary`、`agent_with_external_short_term_memory` | 为对话代理叠加检查点、摘要与 SQLite 持久化。 | 配置 `MemorySaver`、组织摘要 reducer、在不改动核心逻辑的前提下切换持久化存储。 | ~2 小时 |
 | `stage03_state_management` → `agent_with_parallel_nodes`、`agent_with_state_reducer`、`agent_with_multiple_state`、`agent_with_pydantic_schema_constrain`、`agent_with_subgraph`、`agent_with_subgraph_memory` | 掌握大型流程里的类型化状态、Reducer 与子图。 | 借助 `Send` 并行化、化解 Reducer 冲突、按节点隔离状态、为子图独立记忆。 | ~3 小时 |
 | `stage04_operational_control` → `agent_with_interruption`、`agent_with_validation_loop`、`agent_with_tool_approval_interrupt`、`agent_with_stream_interruption`、`agent_with_dynamic_interruption`、`agent_with_durable_execution`、`agent_with_message_filter`、`agent_with_time_travel` | 演练联机调试、风控与运行记录排查。 | 注入断点、构建校验循环、封装副作用任务避免重复执行、掌控流式输出、裁剪历史、从过去运行分叉。 | ~3 小时 |
-| `stage05_advanced_memory_systems` → `agent_with_structured_memory`、`agent_with_fact_collection`、`agent_with_long_term_memory`、`agent_with_multi_memory_coordination` | 构建多层 TrustCall 记忆与个性化流程。 | 抽取结构化档案、采集事实、撰写反思摘要、在多记忆间智能路由。 | ~3 小时 |
+| `stage05_advanced_memory_systems` → `agent_with_structured_memory`、`agent_with_fact_collection`、`agent_with_long_term_memory`、`agent_with_multi_memory_coordination` | 构建多层结构化记忆与个性化流程。 | 抽取结构化档案、采集事实、撰写反思摘要、在多记忆间智能路由。 | ~3 小时 |
 | `stage06_production_systems` → `agent_with_parallel_retrieval`、`agent_with_semantic_memory`、`agent_with_production_memory`、`agent_with_deep_research` | 交付生产级检索与研究流水线。 | 并联检索器、融合语义召回、配置外部检查点后端、运行深度研究工作流。 | ~3 小时 |
 
 每个 Python 文件开头都有 “What You'll Learn / Lesson Flow” 的文档字符串，运行前即可快速了解内容。
@@ -109,6 +109,7 @@ python -m src.langgraph_learning.stage01_foundations.agent_with_tool_call
 python -m src.langgraph_learning.stage01_foundations.agent_with_router
 python -m src.langgraph_learning.stage01_foundations.agent_with_tool_router
 python -m src.langgraph_learning.stage01_foundations.agent_with_reactive_router
+python -m src.langgraph_learning.stage01_foundations.agent_with_structured_output
 
 # Stage 02 记忆基础
 python -m src.langgraph_learning.stage02_memory_basics.agent_with_short_term_memory

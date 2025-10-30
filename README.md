@@ -34,18 +34,18 @@ The lesson also saves a graph diagram you can reference or share:
 
 - **Script-first tutorials.** Most LangGraph examples online live in Jupyter notebooks; great for reading, not ideal for reuse. Every tutorial here is a standalone Python module with a `main()` entry point and stage-specific helpers.
 - **Structured learning path.** Lessons are grouped into numbered stages so you always know what to study next—from Stage 01 foundational graph skills to Stage 06 production retrieval pipelines.
-- **Consistent tooling.** Shared utilities handle graph visualization, environment checks, TrustCall inspection, and common math tools. Less boilerplate, more focus on concepts.
+- **Consistent tooling.** Shared utilities handle graph visualization, environment checks, structured output inspection, and common math tools. Less boilerplate, more focus on concepts.
 - **Automation friendly.** Because everything is pure Python, you can run the entire course headlessly, integrate it into CI pipelines, or extend it with your own tests.
 
 ## Learning Roadmap
 
 | Stage | Lessons Snapshot | Skill Gains | Est. Time |
 | --- | --- | --- | --- |
-| `stage01_foundations` → `quickstart`, `agent_with_tool_call`, `agent_with_router`, `agent_with_tool_router`, `agent_with_reactive_router` | Verify credentials, bind tools, branch flows, and rehearse reactive tool loops. | Stand up `MessagesState`, detect and execute tool calls, configure conditional edges, and loop on tool replays. | ~2 hrs |
+| `stage01_foundations` → `quickstart`, `agent_with_tool_call`, `agent_with_router`, `agent_with_tool_router`, `agent_with_reactive_router`, `agent_with_structured_output` | Verify credentials, bind tools, branch flows, rehearse reactive tool loops, and master structured output. | Stand up `MessagesState`, detect and execute tool calls, configure conditional edges, loop on tool replays, and generate structured data with validation. | ~2.5 hrs |
 | `stage02_memory_basics` → `agent_with_short_term_memory`, `agent_with_chat_summary`, `agent_with_external_short_term_memory` | Layer checkpoints, summarization, and SQLite persistence onto conversational agents. | Configure `MemorySaver`, orchestrate summary reducers, and swap durable storage with minimal code changes. | ~2 hrs |
 | `stage03_state_management` → `agent_with_parallel_nodes`, `agent_with_state_reducer`, `agent_with_multiple_state`, `agent_with_pydantic_schema_constrain`, `agent_with_subgraph`, `agent_with_subgraph_memory` | Master typed state, reducers, and subgraphs for larger flows. | Parallelize with `Send`, resolve reducer conflicts, scope data per node, and isolate child graph memory. | ~3 hrs |
 | `stage04_operational_control` → `agent_with_interruption`, `agent_with_validation_loop`, `agent_with_tool_approval_interrupt`, `agent_with_stream_interruption`, `agent_with_dynamic_interruption`, `agent_with_durable_execution`, `agent_with_message_filter`, `agent_with_time_travel` | Practice live debugging, guardrails, and run inspection. | Inject breakpoints, build validator loops, wrap side effects with cached tasks, control streaming updates, trim history, and fork prior runs. | ~3 hrs |
-| `stage05_advanced_memory_systems` → `agent_with_structured_memory`, `agent_with_fact_collection`, `agent_with_long_term_memory`, `agent_with_multi_memory_coordination` | Build multi-layer TrustCall memories and personalization flows. | Extract structured profiles, capture facts, author reflective summaries, and route requests across memories. | ~3 hrs |
+| `stage05_advanced_memory_systems` → `agent_with_structured_memory`, `agent_with_fact_collection`, `agent_with_long_term_memory`, `agent_with_multi_memory_coordination` | Build multi-layer structured memories and personalization flows. | Extract structured profiles, capture facts, author reflective summaries, and route requests across memories. | ~3 hrs |
 | `stage06_production_systems` → `agent_with_parallel_retrieval`, `agent_with_semantic_memory`, `agent_with_production_memory`, `agent_with_deep_research` | Ship production-ready research and retrieval pipelines. | Orchestrate parallel retrievers, blend semantic recall, configure external checkpoint backends, and run deep research workflows. | ~3 hrs |
 
 Every Python file begins with a “What You'll Learn / Lesson Flow” docstring so you can skim the topic before running it.
@@ -107,6 +107,7 @@ python -m src.langgraph_learning.stage01_foundations.agent_with_tool_call
 python -m src.langgraph_learning.stage01_foundations.agent_with_router
 python -m src.langgraph_learning.stage01_foundations.agent_with_tool_router
 python -m src.langgraph_learning.stage01_foundations.agent_with_reactive_router
+python -m src.langgraph_learning.stage01_foundations.agent_with_structured_output
 
 # Stage 02 memory basics
 python -m src.langgraph_learning.stage02_memory_basics.agent_with_short_term_memory

@@ -27,8 +27,8 @@ This system introduces intelligent routing between multiple memory types using a
 
 What You'll Learn
 1. Coordinate multiple memory types (profile, todos, instructions) inside one LangGraph agent.
-2. Use TrustCall extractors to insert or patch structured documents based on conversation turns.
-3. Route tool decisions dynamically and summarize TrustCall changes for transparent logging.
+2. Use LangChain structured output to insert or patch structured documents based on conversation turns.
+3. Route tool decisions dynamically and summarize structured output changes for transparent logging.
 
 Lesson Flow
 1. Define Pydantic schemas for profiles and todos, plus a tool-selection `TypedDict`.
@@ -53,7 +53,6 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.store.base import BaseStore
 from langgraph.store.memory import InMemoryStore
 from pydantic import BaseModel, Field
-from trustcall import create_extractor
 
 if __package__ in {None, ""}:
     import sys
@@ -62,6 +61,8 @@ if __package__ in {None, ""}:
     project_root = str(Path(__file__).resolve().parents[1])
     if project_root not in sys.path:
         sys.path.append(project_root)
+
+from src.langgraph_learning.utils.structured_output import create_structured_agent
 
 from src.langgraph_learning.stage05_advanced_memory_systems.configuration import (
     MemoryConfiguration,
@@ -144,11 +145,6 @@ Current instructions:
 Decide which long-term memory should be updated with the latest user message.
 Always confirm ToDo updates to the user. Stay natural in your responses."""
 
-TRUSTCALL_INSTRUCTION = """Reflect on the conversation below.
-Use the provided tools to retain any necessary memories about the user.
-Run updates and insertions in parallel where possible.
-
-System Time: {time}"""
 
 CREATE_INSTRUCTIONS_PROMPT = """Reflect on the conversation and update the instructions
 that guide how ToDo items should be created or modified.
@@ -207,45 +203,44 @@ def _create_task_orchestra_node(llm: ChatOpenAI):
 
 
 def _create_profile_updater(llm: ChatOpenAI):
-    """Create profile update node with TrustCall extractor.
+    """Create profile update node with structured output.
 
-    CORE TEACHING CONCEPT: Demonstrates TrustCall's incremental update mechanism
-    for structured user profiles using JSON Patch.
+    CORE TEACHING CONCEPT: Demonstrates structured output for managing
+    structured user profiles with reliable schema validation.
     """
-    profile_extractor = create_extractor(
-        llm, tools=[Profile], tool_choice="Profile", enable_inserts=True
+    profile_extractor = create_structured_agent(
+        model=llm, schema=Profile, tools=[], handle_errors=True
     )
 
     def update_profile(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        """Update user profile using TrustCall extractor.
+        """Update user profile using structured output.
 
-        KEY INNOVATION: TrustCall uses JSON Patch to update only changed fields,
-        making it more efficient than regenerating the entire profile.
+        KEY INNOVATION: Structured output provides reliable schema validation
+        and automatic error handling for profile updates.
         """
         cfg = MemoryConfiguration.from_runnable_config(config)
         namespace = ("profile", cfg.user_id)
 
-        # Load existing profile for incremental updates
+        # Load existing profile for context
         existing_items = store.search(namespace)
-        existing_docs = (
-            [(item.key, "Profile", item.value) for item in existing_items]
-            if existing_items
-            else None
-        )
+        existing_context = ""
+        if existing_items:
+            existing_profiles = [f"- {item.value}" for item in existing_items]
+            existing_context = f"\n\nExisting profiles:\n" + "\n".join(
+                existing_profiles
+            )
 
-        # Prepare messages for TrustCall extraction
-        instruction = TRUSTCALL_INSTRUCTION.format(time=datetime.now().isoformat())
-        messages = [SystemMessage(content=instruction), *state["messages"][:-1]]
+        # Prepare messages for structured output extraction
+        messages = [SystemMessage(content=existing_context), *state["messages"][:-1]]
 
-        # Extract and update profile using TrustCall
-        result = profile_extractor.invoke(
-            {"messages": messages, "existing": existing_docs}
-        )
+        # Extract and update profile using structured output
+        result = profile_extractor.invoke({"messages": messages})
 
         # Store updated profile
-        for response, meta in zip(result["responses"], result["response_metadata"]):
-            key = meta.get("json_doc_id") or str(uuid.uuid4())
-            store.put(namespace, key, response.model_dump(mode="json"))
+        structured_response = result.get("structured_response")
+        if structured_response:
+            key = str(uuid.uuid4())
+            store.put(namespace, key, structured_response.model_dump(mode="json"))
 
         # Return confirmation
         message = state["messages"][-1]
@@ -268,45 +263,42 @@ def _create_profile_updater(llm: ChatOpenAI):
 
 
 def _create_todos_updater(llm: ChatOpenAI):
-    """Create todos update node with TrustCall extractor.
+    """Create todos update node with structured output.
 
-    CORE TEACHING CONCEPT: Shows how TrustCall can manage collections of
-    structured tasks with incremental updates.
+    CORE TEACHING CONCEPT: Shows how structured output can manage collections of
+    structured tasks with reliable schema validation.
     """
-    todo_extractor = create_extractor(
-        llm, tools=[ToDo], tool_choice="ToDo", enable_inserts=True
+    todo_extractor = create_structured_agent(
+        model=llm, schema=ToDo, tools=[], handle_errors=True
     )
 
     def update_todos(state: MessagesState, config: RunnableConfig, store: BaseStore):
-        """Update user todos using TrustCall extractor.
+        """Update user todos using structured output.
 
-        KEY INNOVATION: TrustCall enables both inserting new todos and
-        updating existing ones in a single operation.
+        KEY INNOVATION: Structured output enables reliable task management
+        with automatic error handling and schema validation.
         """
         cfg = MemoryConfiguration.from_runnable_config(config)
         namespace = ("todo", cfg.user_id)
 
-        # Load existing todos
+        # Load existing todos for context
         existing_items = store.search(namespace)
-        existing_docs = (
-            [(item.key, "ToDo", item.value) for item in existing_items]
-            if existing_items
-            else None
-        )
+        existing_context = ""
+        if existing_items:
+            existing_todos = [f"- {item.value}" for item in existing_items]
+            existing_context = f"\n\nExisting todos:\n" + "\n".join(existing_todos)
 
-        # Prepare messages for extraction
-        instruction = TRUSTCALL_INSTRUCTION.format(time=datetime.now().isoformat())
-        messages = [SystemMessage(content=instruction), *state["messages"][:-1]]
+        # Prepare messages for structured output extraction
+        messages = [SystemMessage(content=existing_context), *state["messages"][:-1]]
 
-        # Extract and update todos
-        result = todo_extractor.invoke(
-            {"messages": messages, "existing": existing_docs}
-        )
+        # Extract and update todos using structured output
+        result = todo_extractor.invoke({"messages": messages})
 
         # Store updated todos
-        for response, meta in zip(result["responses"], result["response_metadata"]):
-            key = meta.get("json_doc_id") or str(uuid.uuid4())
-            store.put(namespace, key, response.model_dump(mode="json"))
+        structured_response = result.get("structured_response")
+        if structured_response:
+            key = str(uuid.uuid4())
+            store.put(namespace, key, structured_response.model_dump(mode="json"))
 
         # Return confirmation
         message = state["messages"][-1]
@@ -341,7 +333,7 @@ def _create_instructions_updater(llm: ChatOpenAI):
         """Update user instructions based on conversation context.
 
         KEY INNOVATION: Demonstrates a different approach to memory updates
-        that doesn't use TrustCall, showing the flexibility of the architecture.
+        that doesn't use structured output, showing the flexibility of the architecture.
         """
         cfg = MemoryConfiguration.from_runnable_config(config)
         namespace = ("instructions", cfg.user_id)
@@ -418,16 +410,16 @@ def _create_router():
     return route_message
 
 
-def _assemble_trustcall_agent(
+def _assemble_structured_memory_agent(
     llm: ChatOpenAI,
     *,
     store: BaseStore | None = None,
     checkpointer: MemorySaver | None = None,
 ):
-    """Compile a multi-memory LangGraph agent powered by TrustCall.
+    """Compile a multi-memory LangGraph agent powered by structured output.
 
     This agent coordinates multiple memory types (profile, todos, instructions)
-    using TrustCall extractors to insert or patch structured documents based on
+    using LangChain structured output to insert or patch structured documents based on
     conversation turns.
 
     GRAPH FLOW:
@@ -468,9 +460,9 @@ def _assemble_trustcall_agent(
     return builder.compile(store=store, checkpointer=checkpointer)
 
 
-def build_trustcall_agent(model: ChatOpenAI | None = None):
+def build_structured_memory_agent(model: ChatOpenAI | None = None):
     llm = model or create_llm()
-    graph = _assemble_trustcall_agent(llm)
+    graph = _assemble_structured_memory_agent(llm)
     save_graph_image(
         graph, filename="artifacts/agent_with_multi_memory_coordination.png", xray=True
     )
@@ -480,7 +472,7 @@ def build_trustcall_agent(model: ChatOpenAI | None = None):
 def main() -> None:
     require_llm_provider_api_key()
     maybe_enable_langsmith()
-    graph = build_trustcall_agent()
+    graph = build_structured_memory_agent()
     config = {"configurable": {"thread_id": "memory-agent-demo", "user_id": "leslie"}}
 
     print("=== DEMONSTRATION: Multi-Memory Coordination with Intelligent Routing ===\n")
@@ -526,4 +518,4 @@ if __name__ == "__main__":
 def studio_graph(config: RunnableConfig | None = None):
     """Studio entry point for the multi-memory coordination agent."""
     llm, _ = llm_from_config(config)
-    return _assemble_trustcall_agent(llm)
+    return _assemble_structured_memory_agent(llm)

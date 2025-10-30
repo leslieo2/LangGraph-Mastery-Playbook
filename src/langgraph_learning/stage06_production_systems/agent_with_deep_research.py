@@ -1,5 +1,5 @@
 """
-Production Research Agent: TrustCall-Stabilised Deep Research Workflow
+Production Research Agent: LangChain Structured Output Deep Research Workflow
 
 === PROBLEM STATEMENT ===
 Production research assistants must juggle persona planning, parallel expert interviews,
@@ -9,12 +9,12 @@ this complexity, producing malformed analysts or empty search queries that derai
 === CORE SOLUTION ===
 This lesson assembles a LangGraph that stages the entire research pipeline: generate
 analyst personas, gather evidence via multi-turn interviews, and stitch findings into a
-report. TrustCall-backed extractors guarantee reliable structured data for both analyst
-planning and search query generation, keeping the workflow resilient.
+report. LangChain's structured output with automatic strategy selection guarantees reliable
+structured data for both analyst planning and search query generation, keeping the workflow resilient.
 
 === KEY INNOVATION ===
-- **TrustCall Everywhere**: Personas and search prompts flow through TrustCall extractors,
-  avoiding brittle JSON parsing errors.
+- **Structured Output Everywhere**: Personas and search prompts flow through LangChain's
+  structured output, avoiding brittle JSON parsing errors.
 - **Human-in-the-Loop Checkpoint**: Editors can reshape personas before interviews begin,
   ensuring downstream work aligns with real stakeholder needs.
 - **Parallel Retrieval Interviews**: Tavily and Wikipedia searches run per analyst to
@@ -25,8 +25,8 @@ planning and search query generation, keeping the workflow resilient.
 === COMPARISON WITH EARLIER STAGES ===
 | Stage 05 Memory Systems | Stage 06 Production Research |
 |-------------------------|------------------------------|
-| Focus on updating user memory with TrustCall | Focus on orchestrating an end-to-end research process |
-| Structured outputs stay within memory schemas | TrustCall guarantees persona + query stability |
+| Focus on updating user memory with structured output | Focus on orchestrating an end-to-end research process |
+| Structured outputs stay within memory schemas | Structured output guarantees persona + query stability |
 | Single-user dialogues | Multi-analyst, multi-interview workflow |
 
 What You'll Learn
@@ -55,6 +55,8 @@ from langchain_core.messages import (
     get_buffer_string,
 )
 from langchain_community.document_loaders import WikipediaLoader
+from langchain.agents import create_agent
+from langchain.agents.structured_output import ToolStrategy
 from langchain_core.runnables import RunnableConfig
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import MemorySaver
@@ -62,7 +64,6 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.types import Send
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
-from trustcall import create_extractor
 
 from src.langgraph_learning.utils import (
     create_llm,
@@ -132,13 +133,18 @@ def _run_structured_extractor(
     *,
     existing: Any | None = None,
 ) -> BaseModel | None:
-    """Invoke a TrustCall extractor and return the first structured response."""
-    payload: dict[str, Any] = {"messages": list(messages)}
+    """Invoke a structured output agent and return the first structured response."""
+    # Prepare context about existing data if provided
+    context_messages = list(messages)
     if existing is not None:
-        payload["existing"] = existing
-    result = extractor.invoke(payload)
-    responses: list[BaseModel] = result.get("responses", [])
-    return responses[0] if responses else None
+        context_messages.insert(
+            0, SystemMessage(content=f"Existing context: {existing}")
+        )
+
+    # Invoke structured agent
+    result = extractor.invoke({"messages": context_messages})
+    structured_response = result.get("structured_response")
+    return structured_response if structured_response else None
 
 
 ANALYST_INSTRUCTIONS = """You are tasked with creating a set of analyst personas.
@@ -268,7 +274,7 @@ def _assemble_interview_app(
         return "\n\n---\n\n".join(chunks)
 
     def _resolve_search_query(state: InterviewState) -> str | None:
-        # Reuse one TrustCall extractor for both Tavily and Wikipedia lookups so query
+        # Reuse one structured output agent for both Tavily and Wikipedia lookups so query
         # generation stays consistent no matter which retrieval tool runs next.
         extraction = _run_structured_extractor(
             search_extractor, [SEARCH_INSTRUCTIONS, *state["messages"]]
@@ -393,8 +399,10 @@ def build_interview_app(
     def wikipedia_loader(query: str):
         return WikipediaLoader(query=query, load_max_docs=2).load()
 
-    search_extractor = create_extractor(
-        llm, tools=[SearchQuery], tool_choice=SearchQuery.__name__
+    search_extractor = create_agent(
+        model=llm,
+        tools=[],
+        response_format=ToolStrategy(schema=SearchQuery, handle_errors=True),
     )
     checkpointer = MemorySaver()
     return _assemble_interview_app(
@@ -432,7 +440,9 @@ def _assemble_research_assistant_graph(
             ],
         )
         if extraction is None:
-            raise ValueError("Failed to generate analyst personas via TrustCall.")
+            raise ValueError(
+                "Failed to generate analyst personas via structured output."
+            )
         return {"analysts": extraction.analysts}
 
     def human_feedback(_: ResearchGraphState) -> None:
@@ -571,8 +581,10 @@ def build_research_assistant_graph(
         base_url=base_url,
         max_interview_turns=max_interview_turns,
     )
-    analyst_extractor = create_extractor(
-        llm, tools=[Perspectives], tool_choice=Perspectives.__name__
+    analyst_extractor = create_agent(
+        model=llm,
+        tools=[],
+        response_format=ToolStrategy(schema=Perspectives, handle_errors=True),
     )
     checkpointer = MemorySaver()
     graph = _assemble_research_assistant_graph(
@@ -673,8 +685,10 @@ def studio_graph(config: RunnableConfig | None = None):
         base_url=base_url,
         max_interview_turns=max_turns,
     )
-    analyst_extractor = create_extractor(
-        llm, tools=[Perspectives], tool_choice=Perspectives.__name__
+    analyst_extractor = create_agent(
+        model=llm,
+        tools=[],
+        response_format=ToolStrategy(schema=Perspectives, handle_errors=True),
     )
     checkpointer = MemorySaver()
     return _assemble_research_assistant_graph(

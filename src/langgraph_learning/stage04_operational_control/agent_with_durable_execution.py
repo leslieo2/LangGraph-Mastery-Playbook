@@ -148,11 +148,15 @@ def _assemble_durable_graph(llm: ChatOpenAI, saver: SqliteSaver):
     return builder.compile(checkpointer=saver)
 
 
-def build_durable_execution_graph(db_path: Path | str = Path("artifacts/durable/state.db")):
+def build_durable_execution_graph(
+    db_path: Path | str = Path("artifacts/durable/state.db"),
+):
     llm = create_llm()
     saver = _create_sqlite_saver(Path(db_path))
     graph = _assemble_durable_graph(llm, saver)
-    save_graph_image(graph, filename="artifacts/durable/agent_with_durable_execution.png")
+    save_graph_image(
+        graph, filename="artifacts/durable/agent_with_durable_execution.png"
+    )
     return graph
 
 

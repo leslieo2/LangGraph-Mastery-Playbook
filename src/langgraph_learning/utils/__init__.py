@@ -7,6 +7,11 @@ from .llm import (
     require_llm_provider_api_key,
 )
 from .messages import pretty_print_messages
+from .structured_output import (
+    structure_output,
+    create_structured_agent,
+    extract_structured_response,
+)
 from .tools import add, divide, multiply
 
 __all__ = [
@@ -19,6 +24,9 @@ __all__ = [
     "save_graph_image",
     "save_png",
     "pretty_print_messages",
+    "structure_output",
+    "create_structured_agent",
+    "extract_structured_response",
     "add",
     "divide",
     "multiply",
