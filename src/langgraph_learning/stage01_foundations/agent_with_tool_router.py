@@ -78,7 +78,7 @@ def build_tool_calling_graph(*, model: str | None = None):
 
 def run_demo(graph) -> None:
     """Run a small demo conversation through the compiled graph."""
-    messages = [HumanMessage(content="Hello, what is 2 multiplied by 2?")]
+    messages = [HumanMessage(content="Hello, what is 253523523 multiplied by 2321316?")]
     result = graph.invoke({"messages": messages})
     pretty_print_messages(result["messages"], header="Router output")
 

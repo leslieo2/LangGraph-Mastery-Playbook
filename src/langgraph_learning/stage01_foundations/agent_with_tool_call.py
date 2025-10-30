@@ -1,46 +1,33 @@
 """
 Single-Node Tool Call: MessagesState Warm-Up
 
-=== PROBLEM STATEMENT ===
-New LangGraph builders often wonder how chat history flows through tool-enabled models
-and how to bind Python functions as tools without constructing a large graph.
+A simple demonstration of tool calling with LangGraph.
 
-=== CORE SOLUTION ===
-This lesson binds a simple multiply function to a chat model, shows how `add_messages`
-manages history, and compiles a single-node graph that routes messages through the tool.
+Key Concepts:
+- bind_tools() makes LLMs aware of available tools (does NOT execute them)
+- Use MessagesState to manage conversation history
+- Build minimal single-node graphs for tool calling
 
-=== KEY INNOVATION ===
-- **Message Inspection**: Walk through a sample transcript with `pretty_print_messages`.
-- **Tool Binding Basics**: Demonstrate `llm.bind_tools` with a scalar multiply helper.
-- **Minimal Graph**: Compile a one-node `MessagesState` graph to highlight flow.
+What You'll Learn:
+1. How bind_tools() works - it only informs the model about tools
+2. How MessagesState manages conversation flow
+3. How to build and run simple tool-calling graphs
 
-=== COMPARISON WITH TOOL ROUTERS ===
-| Tool Router (multiple nodes) | Single Node Tool Call (this file) |
-|------------------------------|-----------------------------------|
-| Needs routing logic and ToolNode | Direct invocation via bound tools |
-| Complexity suits larger agents   | Ideal for first tool-calling experiments |
-| Harder to see raw message flow   | Focus on message history and tool result |
-
-What You'll Learn
-1. Review how LangGraph reuses existing chat messages and how `add_messages` manages history.
-2. See how to bind a LangChain chat model to a simple Python tool for entry-level tool calling.
-3. Compile a single-node `MessagesState` graph, render its structure, and run an end-to-end LLM flow.
-
-Lesson Flow
-1. Assemble a sample conversation and inspect the message structure with `pretty_print_messages`.
-2. Bind a multiply tool to the model, trigger the tool, and inspect the response.
-3. Demonstrate how `add_messages` appends or overwrites existing history.
-4. Build a minimal LangGraph app, save a diagram, and send one message through the graph.
+Important Note:
+bind_tools() tells the model "these tools exist" but the model still needs to:
+- Decide when to use tools
+- Provide tool arguments
+- Wait for actual tool execution (requires additional logic)
 """
 
 from __future__ import annotations
 
 from typing import Sequence
 
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END, START
-from langgraph.graph import MessagesState, StateGraph, add_messages
+from langgraph.graph import MessagesState, StateGraph
 
 from src.langgraph_learning.utils import (
     create_llm,
@@ -54,50 +41,25 @@ from src.langgraph_learning.utils import (
 Messages = Sequence[BaseMessage]
 
 
-def sample_transcript() -> Messages:
-    """Return a fixed conversation snippet used across the demos."""
-    return (
-        AIMessage(
-            content="So you said you were researching ocean mammals?", name="Model"
-        ),
-        HumanMessage(content="Yes, that's right.", name="Leslie"),
-        AIMessage(content="Great, what would you like to learn about.", name="Model"),
-        HumanMessage(content="Where can I see Orcas in the US?", name="Leslie"),
-    )
+def inspect_tool_binding() -> None:
+    """Demonstrate how to bind simple Python tools to a chat model.
 
-
-def inspect_messages(model: str | None = None) -> None:
-    """Show how to invoke an LLM on a list of messages."""
-    llm = create_llm(model=model)
-    history = list(sample_transcript())
-    pretty_print_messages(history, header="Input messages")
-
-    response = llm.invoke(history)
-    print("\nModel reply:", response.content)
-
-
-def inspect_tool_binding(model: str | None = None) -> None:
-    """Demonstrate how to bind simple Python tools to a chat model."""
-    llm = create_llm(model=model)
+    Important: bind_tools() only makes the model aware of available tools.
+    The model can suggest tool usage, but doesn't automatically execute them.
+    """
+    llm = create_llm()
+    # bind_tools() tells the model about available tools, but doesn't execute them
     llm_with_tools = llm.bind_tools([multiply])
     response = llm_with_tools.invoke(
-        [HumanMessage(content="What is 2 multiplied by 3?")]
+        [HumanMessage(content="What is 223123123 multiplied by 3241241?")]
     )
     pretty_print_messages([response], header="Tool call response")
+    print("\nNote: The model knows about the multiply tool but doesn't execute it automatically.")
 
 
-def inspect_add_messages() -> None:
-    """Illustrate append/overwrite semantics of `add_messages`."""
-    initial_messages = list(sample_transcript())[:2]
-    new_message = AIMessage(
-        content="Sure. What specifically are you interested in?", name="Model"
-    )
-    result = add_messages(initial_messages, new_message)
-    print("\nCombined messages:", result)
-
-
-def _assemble_tool_calling_graph(llm):
-    """Return the compiled tool-calling graph given a prepared LLM."""
+def build_tool_calling_app(*, model: str | None = None):
+    """Create a compiled graph that routes messages through the LLM."""
+    llm = create_llm(model=model)
     llm_with_tools = llm.bind_tools([multiply])
 
     def llm_node(state: MessagesState):
@@ -111,17 +73,20 @@ def _assemble_tool_calling_graph(llm):
     return graph.compile()
 
 
-def build_tool_calling_app(*, model: str | None = None):
-    """Create a compiled graph that routes messages through the LLM."""
-    llm = create_llm(model=model)
-    return _assemble_tool_calling_graph(llm)
-
-
 def studio_graph(config: RunnableConfig | None = None):
     """Studio entry point that reuses optional config overrides."""
-
     llm, _ = llm_from_config(config)
-    return _assemble_tool_calling_graph(llm)
+    llm_with_tools = llm.bind_tools([multiply])
+
+    def llm_node(state: MessagesState):
+        response = llm_with_tools.invoke(state["messages"])
+        return {"messages": [response]}
+
+    graph = StateGraph(MessagesState)
+    graph.add_node("tool_calling_llm", llm_node)
+    graph.add_edge(START, "tool_calling_llm")
+    graph.add_edge("tool_calling_llm", END)
+    return graph.compile()
 
 
 def run_app_demo(app) -> None:
@@ -131,11 +96,13 @@ def run_app_demo(app) -> None:
 
 
 def main() -> None:
+    """Run the tool calling demonstration."""
     require_llm_provider_api_key()
-    inspect_messages()
-    inspect_tool_binding()
-    inspect_add_messages()
 
+    # Show tool binding in action
+    inspect_tool_binding()
+
+    # Build and run the graph
     app = build_tool_calling_app()
     save_graph_image(app, filename="artifacts/agent_with_tool_call.png")
     run_app_demo(app)
