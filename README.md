@@ -37,6 +37,10 @@ The lesson also saves a graph diagram you can reference or share:
 - **Consistent tooling.** Shared utilities handle graph visualization, environment checks, structured output inspection, and common math tools. Less boilerplate, more focus on concepts.
 - **Automation friendly.** Because everything is pure Python, you can run the entire course headlessly, integrate it into CI pipelines, or extend it with your own tests.
 
+## Related Projects
+
+- [LieGraph](https://github.com/leslieo2/LieGraph) shows how to turn LangGraph patterns into a fully playable multi-agent social deduction game, complete with UI, metrics, and production-friendly tooling.
+
 ## Learning Roadmap
 
 | Stage | Lessons Snapshot | Skill Gains | Est. Time |

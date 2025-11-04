@@ -40,6 +40,10 @@ uv run python -m src.langgraph_learning.stage06_production_systems.agent_with_de
 - **一致的工具体系。** 共享工具负责图形可视化、环境检查、结构化输出分析，以及常用的数学工具。减少样板代码，把时间留给核心概念。
 - **便于自动化。** 全部基于纯 Python，你可以无界面运行整套课程，集成到 CI 流水线，或扩展成自己的测试。
 
+## 相关项目
+
+- [LieGraph](https://github.com/leslieo2/LieGraph) 展示了如何将本手册里的 LangGraph 模式扩展为完整的多智能体“谁是卧底”游戏，涵盖 UI、指标与生产级工具链。
+
 ## 学习路线
 
 | Stage | 课程速览 | 核心收获 | 预计用时 |
